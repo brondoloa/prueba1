@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>la pica de juanito</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .login-header h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .login-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .login-body {
+            padding: 2rem;
+        }
+        
+        .form-floating {
+            margin-bottom: 1rem;
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-login {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        .loading {
+            display: none;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 0.25rem;
+        }
+        
+        .role-admin {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .role-cashier {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .role-validator {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .demo-users {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+        
+        .demo-users h6 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="login-card">
+                    <div class="login-header">
+                        <i class="fas fa-cash-register fa-2x mb-3"></i>
+                        <h2>TPV Restaurante</h2>
+                        <p>Sistema de Punto de Venta</p>
+                    </div>
+                    
+                    <div class="login-body">
+                        <form id="loginForm">
+                            <div id="alertContainer"></div>
+                            
+                            <div class="form-floating">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="username" 
+                                       name="username" 
+                                       placeholder="Usuario"
+                                       required
+                                       autocomplete="username">
+                                <label for="username">
+                                    <i class="fas fa-user me-2"></i>Usuario
+                                </label>
+                            </div>
+                            
+                            <div class="form-floating">
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="password" 
+                                       placeholder="Contraseña"
+                                       required
+                                       autocomplete="current-password">
+                                <label for="password">
+                                    <i class="fas fa-lock me-2"></i>Contraseña
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-login w-100">
+                                <span class="login-text">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                                </span>
+                                <span class="loading">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Iniciando...
+                                </span>
+                            </button>
+                        </form>
+                        
+                        <!-- Usuarios de demostración -->
+                        <div class="demo-users">
+                            <h6><i class="fas fa-users me-2"></i>Usuarios de Prueba:</h6>
+                            <div>
+                                <strong>admin</strong> / admin123 
+                                <span class="role-badge role-admin">ADMIN</span>
+                            </div>
+                            <div>
+                                <strong>cajero</strong> / cajero123 
+                                <span class="role-badge role-cashier">CAJERO</span>
+                            </div>
+                            <div>
+                                <strong>validador</strong> / validador123 
+                                <span class="role-badge role-validator">VALIDADOR</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const alertContainer = document.getElementById('alertContainer');
+            const loginText = document.querySelector('.login-text');
+            const loading = document.querySelector('.loading');
+
+            // Verificar si hay errores en la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            
+            if (error) {
+                let message = 'Error desconocido';
+                switch(error) {
+                    case 'access_required':
+                        message = 'Debe iniciar sesión para acceder';
+                        break;
+                    case 'token_expired':
+                        message = 'Su sesión ha expirado. Inicie sesión nuevamente';
+                        break;
+                    case 'invalid_token':
+                        message = 'Token de acceso inválido';
+                        break;
+                    case 'invalid_user':
+                        message = 'Usuario no válido';
+                        break;
+                    case 'insufficient_permissions':
+                        message = 'Permisos insuficientes';
+                        break;
+                    case 'server_error':
+                        message = 'Error del servidor. Intente nuevamente';
+                        break;
+                }
+                showAlert(message, 'danger');
+                
+                // Limpiar la URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                
+                if (!username || !password) {
+                    showAlert('Por favor complete todos los campos', 'warning');
+                    return;
+                }
+
+                // Mostrar loading
+                loginText.style.display = 'none';
+                loading.style.display = 'inline';
+                
+                try {
+                    const response = await fetch('/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Guardar token
+                        localStorage.setItem('tpv_token', data.token);
+                        localStorage.setItem('tpv_user', JSON.stringify(data.user));
+                        
+                        showAlert('Inicio de sesión exitoso. Redirigiendo...', 'success');
+                        
+                        // Redirigir según el rol
+                        setTimeout(() => {
+                            switch(data.user.role) {
+                                case 'admin':
+                                    window.location.href = '/admin-panel';
+                                    break;
+                                case 'cashier':
+                                    window.location.href = '/cashier-panel';
+                                    break;
+                                case 'validator':
+                                    window.location.href = '/validator-panel';
+                                    break;
+                                default:
+                                    window.location.href = '/';
+                            }
+                        }, 1500);
+                    } else {
+                        showAlert(data.message || 'Error en el inicio de sesión', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('Error de conexión. Verifique su internet', 'danger');
+                }
+                
+                // Ocultar loading
+                loginText.style.display = 'inline';
+                loading.style.display = 'none';
+            });
+
+            function showAlert(message, type) {
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        <i class="fas ${getAlertIcon(type)} me-2"></i>
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                alertContainer.innerHTML = alertHtml;
+                
+                // Auto-dismiss después de 5 segundos
+                setTimeout(() => {
+                    const alert = alertContainer.querySelector('.alert');
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, 5000);
+            }
+
+            function getAlertIcon(type) {
+                switch(type) {
+                    case 'success': return 'fa-check-circle';
+                    case 'danger': return 'fa-exclamation-triangle';
+                    case 'warning': return 'fa-exclamation-circle';
+                    case 'info': return 'fa-info-circle';
+                    default: return 'fa-info-circle';
+                }
+            }
+
+            // Auto-focus en el campo de usuario
+            document.getElementById('username').focus();
+
+            // Verificar si ya está logueado
+            const token = localStorage.getItem('tpv_token');
+            const user = localStorage.getItem('tpv_user');
+            
+            if (token && user) {
+                try {
+                    const userData = JSON.parse(user);
+                    // Verificar token con el servidor
+                    fetch('/auth/verify', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }).then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Usuario ya está logueado, redirigir
+                            switch(userData.role) {
+                                case 'admin':
+                                    window.location.href = '/admin-panel';
+                                    break;
+                                case 'cashier':
+                                    window.location.href = '/cashier-panel';
+                                    break;
+                                case 'validator':
+                                    window.location.href = '/validator-panel';
+                                    break;
+                            }
+                        }
+                    }).catch(() => {
+                        // Token inválido, limpiar storage
+                        localStorage.removeItem('tpv_token');
+                        localStorage.removeItem('tpv_user');
+                    });
+                } catch (e) {
+                    // Error parsing user data, limpiar storage
+                    localStorage.removeItem('tpv_token');
+                    localStorage.removeItem('tpv_user');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
