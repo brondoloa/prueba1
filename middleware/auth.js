@@ -202,39 +202,6 @@ class AuthMiddleware {
         }
     }
 
-    // Middleware para verificar si es admin
-    static requireAdmin(req, res, next) {
-        if (!req.user || req.user.role !== 'admin') {
-            return res.status(403).json({
-                success: false,
-                message: 'Acceso restringido a administradores'
-            });
-        }
-        next();
-    }
-
-    // Middleware para verificar si es cajero o admin
-    static requireCashierOrAdmin(req, res, next) {
-        if (!req.user || !['admin', 'cashier'].includes(req.user.role)) {
-            return res.status(403).json({
-                success: false,
-                message: 'Acceso restringido a cajeros y administradores'
-            });
-        }
-        next();
-    }
-
-    // Middleware para verificar si es validador, cajero o admin
-    static requireValidatorOrCashierOrAdmin(req, res, next) {
-        if (!req.user || !['admin', 'cashier', 'validator'].includes(req.user.role)) {
-            return res.status(403).json({
-                success: false,
-                message: 'Acceso no autorizado'
-            });
-        }
-        next();
-    }
-
     // Verificar si el token está próximo a expirar (para renovación automática)
     static checkTokenExpiration(req, res, next) {
         if (!req.user) {
