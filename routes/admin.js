@@ -1,4 +1,5 @@
 const express = require('express');
+const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -6,42 +7,41 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Sale = require('../models/Sale');
 const Voucher = require('../models/Voucher');
-const { runQuery, getOne, getAll } = require('../config/database');
+const { isAdmin } = require('../middleware/auth');
 
-const router = express.Router();
-
-// Configuración de multer para subida de archivos (logos)
+// Configuración de multer para subida de imágenes
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+        const uploadsPath = path.join(__dirname, '../public/uploads');
+        if (!fs.existsSync(uploadsPath)) {
+            fs.mkdirSync(uploadsPath, { recursive: true });
         }
-        cb(null, uploadDir);
+        cb(null, uploadsPath);
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB
+    },
     fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        
-        if (mimetype && extname) {
-            return cb(null, true);
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
         } else {
-            cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif)'));
+            cb(new Error('Solo se permiten archivos de imagen'), false);
         }
     }
 });
 
-// GESTIÓN DE USUARIOS
+// Middleware para verificar que el usuario es admin
+router.use(isAdmin);
+
+// =============== GESTIÓN DE USUARIOS ===============
 
 // Obtener todos los usuarios
 router.get('/users', async (req, res) => {
@@ -49,622 +49,398 @@ router.get('/users', async (req, res) => {
         const users = await User.findAll();
         res.json({
             success: true,
-            users: users.map(user => user.toSafeObject())
+            users: users.map(user => user.toJSON())
         });
     } catch (error) {
         console.error('Error obteniendo usuarios:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Crear nuevo usuario
+// Crear usuario
 router.post('/users', async (req, res) => {
     try {
-        const { username, password, role, full_name } = req.body;
-
-        // Validar datos requeridos
-        if (!username || !password || !role || !full_name) {
-            return res.status(400).json({
-                success: false,
-                message: 'Todos los campos son requeridos'
+        const { username, password, role, fullName } = req.body;
+        
+        if (!username || !password || !role || !fullName) {
+            return res.status(400).json({ 
+                error: 'Todos los campos son requeridos' 
             });
         }
-
-        // Validar longitud de contraseña
-        if (password.length < 6) {
-            return res.status(400).json({
-                success: false,
-                message: 'La contraseña debe tener al menos 6 caracteres'
+        
+        if (!['admin', 'cashier', 'validator'].includes(role)) {
+            return res.status(400).json({ 
+                error: 'Rol no válido' 
             });
         }
-
-        const user = await User.create({
-            username: username.trim(),
+        
+        // Verificar si el usuario ya existe
+        const existingUser = await User.findByUsername(username);
+        if (existingUser) {
+            return res.status(400).json({ 
+                error: 'El usuario ya existe' 
+            });
+        }
+        
+        const user = new User({
+            username,
             password,
             role,
-            full_name: full_name.trim()
+            fullName
         });
-
+        
+        await user.create();
+        
         res.status(201).json({
             success: true,
             message: 'Usuario creado exitosamente',
-            user: user.toSafeObject()
+            user: user.toJSON()
         });
+        
     } catch (error) {
         console.error('Error creando usuario:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
 // Actualizar usuario
 router.put('/users/:id', async (req, res) => {
     try {
-        const userId = parseInt(req.params.id);
-        const updateData = req.body;
-
-        // Validar que no se esté intentando actualizar el propio usuario admin
-        if (userId === req.user.id && updateData.role && updateData.role !== 'admin') {
-            return res.status(400).json({
-                success: false,
-                message: 'No puedes cambiar tu propio rol de administrador'
-            });
-        }
-
-        const user = await User.update(userId, updateData);
+        const { id } = req.params;
+        const { fullName, role, active, password } = req.body;
         
+        const user = await User.findById(id);
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'Usuario no encontrado'
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        // Evitar que el admin se desactive a sí mismo
+        if (user.id === req.user.id && active === false) {
+            return res.status(400).json({ 
+                error: 'No puedes desactivar tu propia cuenta' 
             });
         }
-
+        
+        user.fullName = fullName || user.fullName;
+        user.role = role || user.role;
+        user.active = active !== undefined ? active : user.active;
+        
+        if (password) {
+            user.password = password;
+        }
+        
+        await user.update();
+        
         res.json({
             success: true,
             message: 'Usuario actualizado exitosamente',
-            user: user.toSafeObject()
+            user: user.toJSON()
         });
+        
     } catch (error) {
         console.error('Error actualizando usuario:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Eliminar usuario
+// Eliminar usuario (soft delete)
 router.delete('/users/:id', async (req, res) => {
     try {
-        const userId = parseInt(req.params.id);
-
-        // Validar que no se esté intentando eliminar a sí mismo
-        if (userId === req.user.id) {
-            return res.status(400).json({
-                success: false,
-                message: 'No puedes eliminar tu propia cuenta'
+        const { id } = req.params;
+        
+        if (parseInt(id) === req.user.id) {
+            return res.status(400).json({ 
+                error: 'No puedes eliminar tu propia cuenta' 
             });
         }
-
-        await User.delete(userId);
-
+        
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        await user.delete();
+        
         res.json({
             success: true,
             message: 'Usuario eliminado exitosamente'
         });
+        
     } catch (error) {
         console.error('Error eliminando usuario:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// GESTIÓN DE CATEGORÍAS
-
-// Obtener todas las categorías
-router.get('/categories', async (req, res) => {
-    try {
-        const categories = await getAll('SELECT * FROM categories WHERE active = 1 ORDER BY name');
-        res.json({
-            success: true,
-            categories: categories
-        });
-    } catch (error) {
-        console.error('Error obteniendo categorías:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Crear nueva categoría
-router.post('/categories', async (req, res) => {
-    try {
-        const { name, description } = req.body;
-
-        if (!name) {
-            return res.status(400).json({
-                success: false,
-                message: 'El nombre de la categoría es requerido'
-            });
-        }
-
-        const result = await runQuery(
-            'INSERT INTO categories (name, description) VALUES (?, ?)',
-            [name.trim(), description?.trim() || '']
-        );
-
-        const category = await getOne('SELECT * FROM categories WHERE id = ?', [result.id]);
-
-        res.status(201).json({
-            success: true,
-            message: 'Categoría creada exitosamente',
-            category: category
-        });
-    } catch (error) {
-        console.error('Error creando categoría:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Actualizar categoría
-router.put('/categories/:id', async (req, res) => {
-    try {
-        const categoryId = parseInt(req.params.id);
-        const { name, description, active } = req.body;
-
-        const fields = [];
-        const values = [];
-
-        if (name) {
-            fields.push('name = ?');
-            values.push(name.trim());
-        }
-        if (description !== undefined) {
-            fields.push('description = ?');
-            values.push(description?.trim() || '');
-        }
-        if (typeof active !== 'undefined') {
-            fields.push('active = ?');
-            values.push(active ? 1 : 0);
-        }
-
-        if (fields.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'No hay datos para actualizar'
-            });
-        }
-
-        values.push(categoryId);
-
-        await runQuery(
-            `UPDATE categories SET ${fields.join(', ')} WHERE id = ?`,
-            values
-        );
-
-        const category = await getOne('SELECT * FROM categories WHERE id = ?', [categoryId]);
-
-        res.json({
-            success: true,
-            message: 'Categoría actualizada exitosamente',
-            category: category
-        });
-    } catch (error) {
-        console.error('Error actualizando categoría:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Eliminar categoría
-router.delete('/categories/:id', async (req, res) => {
-    try {
-        const categoryId = parseInt(req.params.id);
-
-        // Verificar si hay productos en esta categoría
-        const productsInCategory = await getOne(
-            'SELECT COUNT(*) as count FROM products WHERE category_id = ? AND active = 1',
-            [categoryId]
-        );
-
-        if (productsInCategory.count > 0) {
-            return res.status(400).json({
-                success: false,
-                message: `No se puede eliminar la categoría porque tiene ${productsInCategory.count} producto(s) asociado(s)`
-            });
-        }
-
-        await runQuery('UPDATE categories SET active = 0 WHERE id = ?', [categoryId]);
-
-        res.json({
-            success: true,
-            message: 'Categoría eliminada exitosamente'
-        });
-    } catch (error) {
-        console.error('Error eliminando categoría:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// GESTIÓN DE PRODUCTOS
+// =============== GESTIÓN DE PRODUCTOS ===============
 
 // Obtener todos los productos
 router.get('/products', async (req, res) => {
     try {
-        const products = await Product.findAll();
+        const products = await Product.findAll(false); // Incluir inactivos
         res.json({
             success: true,
-            products: products
+            products
         });
     } catch (error) {
         console.error('Error obteniendo productos:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Crear nuevo producto
-router.post('/products', async (req, res) => {
+// Crear producto
+router.post('/products', upload.single('image'), async (req, res) => {
     try {
-        const product = await Product.create(req.body);
+        const { name, description, price, category, stock, minStock, requiresCoffeeValidation } = req.body;
+        
+        if (!name || !price || !category) {
+            return res.status(400).json({ 
+                error: 'Nombre, precio y categoría son requeridos' 
+            });
+        }
+        
+        const product = new Product({
+            name,
+            description,
+            price: parseFloat(price),
+            category,
+            stock: parseInt(stock) || 0,
+            minStock: parseInt(minStock) || 5,
+            requiresCoffeeValidation: requiresCoffeeValidation === 'true',
+            image: req.file ? `/uploads/${req.file.filename}` : null
+        });
+        
+        await product.create();
+        
         res.status(201).json({
             success: true,
             message: 'Producto creado exitosamente',
-            product: product
+            product
         });
+        
     } catch (error) {
         console.error('Error creando producto:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
 // Actualizar producto
-router.put('/products/:id', async (req, res) => {
+router.put('/products/:id', upload.single('image'), async (req, res) => {
     try {
-        const productId = parseInt(req.params.id);
-        const product = await Product.update(productId, req.body);
+        const { id } = req.params;
+        const { name, description, price, category, stock, minStock, requiresCoffeeValidation, active } = req.body;
+        
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        product.name = name || product.name;
+        product.description = description || product.description;
+        product.price = price ? parseFloat(price) : product.price;
+        product.category = category || product.category;
+        product.stock = stock !== undefined ? parseInt(stock) : product.stock;
+        product.minStock = minStock !== undefined ? parseInt(minStock) : product.minStock;
+        product.requiresCoffeeValidation = requiresCoffeeValidation !== undefined ? requiresCoffeeValidation === 'true' : product.requiresCoffeeValidation;
+        product.active = active !== undefined ? active : product.active;
+        
+        if (req.file) {
+            product.image = `/uploads/${req.file.filename}`;
+        }
+        
+        await product.update();
         
         res.json({
             success: true,
             message: 'Producto actualizado exitosamente',
-            product: product
+            product
         });
+        
     } catch (error) {
         console.error('Error actualizando producto:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Eliminar producto
+// Eliminar producto (soft delete)
 router.delete('/products/:id', async (req, res) => {
     try {
-        const productId = parseInt(req.params.id);
-        await Product.delete(productId);
-
+        const { id } = req.params;
+        
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        await product.delete();
+        
         res.json({
             success: true,
             message: 'Producto eliminado exitosamente'
         });
+        
     } catch (error) {
         console.error('Error eliminando producto:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Actualizar stock de producto
-router.put('/products/:id/stock', async (req, res) => {
+// Obtener productos con stock bajo
+router.get('/products/low-stock', async (req, res) => {
     try {
-        const productId = parseInt(req.params.id);
-        const { quantity, reason } = req.body;
-
-        if (typeof quantity !== 'number' || quantity < 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'La cantidad debe ser un número mayor o igual a 0'
-            });
-        }
-
-        const product = await Product.updateStock(
-            productId, 
-            quantity, 
-            'adjustment', 
-            reason || 'Ajuste manual por administrador', 
-            req.user.id
-        );
-
+        const products = await Product.findLowStock();
         res.json({
             success: true,
-            message: 'Stock actualizado exitosamente',
-            product: product
+            products
         });
     } catch (error) {
-        console.error('Error actualizando stock:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        console.error('Error obteniendo productos con stock bajo:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// REPORTES Y ESTADÍSTICAS
+// =============== REPORTES Y ESTADÍSTICAS ===============
 
-// Dashboard principal
+// Dashboard - estadísticas generales
 router.get('/dashboard', async (req, res) => {
     try {
         const today = new Date().toISOString().split('T')[0];
         
-        // Estadísticas de ventas
-        const salesStats = await Sale.getStats(today, today);
-        
-        // Estadísticas de vales
-        const voucherStats = await Voucher.getStats(today, today);
+        // Estadísticas de hoy
+        const todaySales = await Sale.getSalesStats(today, today);
+        const todayVouchers = await Voucher.getValidationStats(today, today);
         
         // Productos con stock bajo
         const lowStockProducts = await Product.findLowStock();
         
-        // Ventas de hoy
-        const todaySales = await Sale.findToday();
+        // Vouchers pendientes
+        const pendingVouchers = await Voucher.findPendingValidation();
+        const pendingCoffeeVouchers = await Voucher.findPendingCoffeeValidation();
         
-        // Vales pendientes
-        const pendingVouchers = await Voucher.findPending();
-
+        // Conteos generales
+        const totalUsers = await User.findAll();
+        const totalProducts = await Product.findAll();
+        
         res.json({
             success: true,
             dashboard: {
-                sales: salesStats,
-                vouchers: voucherStats,
-                low_stock_products: lowStockProducts.slice(0, 10), // Top 10
-                today_sales_count: todaySales.length,
-                pending_vouchers_count: pendingVouchers.length,
-                total_revenue_today: salesStats.general?.total_revenue || 0
-            }
-        });
-    } catch (error) {
-        console.error('Error obteniendo dashboard:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Reporte de ventas
-router.get('/reports/sales', async (req, res) => {
-    try {
-        const { start_date, end_date, limit = 100, offset = 0 } = req.query;
-        
-        let sales;
-        if (start_date && end_date) {
-            sales = await Sale.findByDateRange(start_date, end_date, parseInt(limit), parseInt(offset));
-        } else {
-            sales = await Sale.findAll(parseInt(limit), parseInt(offset));
-        }
-
-        const stats = await Sale.getStats(start_date, end_date);
-
-        res.json({
-            success: true,
-            sales: sales,
-            statistics: stats,
-            pagination: {
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                count: sales.length
-            }
-        });
-    } catch (error) {
-        console.error('Error obteniendo reporte de ventas:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Reporte de vales
-router.get('/reports/vouchers', async (req, res) => {
-    try {
-        const { status, limit = 100, offset = 0 } = req.query;
-        
-        let vouchers;
-        if (status) {
-            vouchers = await Voucher.findByStatus(status);
-        } else {
-            vouchers = await Voucher.findAll(parseInt(limit), parseInt(offset));
-        }
-
-        const stats = await Voucher.getStats();
-
-        res.json({
-            success: true,
-            vouchers: vouchers,
-            statistics: stats,
-            pagination: {
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                count: vouchers.length
-            }
-        });
-    } catch (error) {
-        console.error('Error obteniendo reporte de vales:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// CONFIGURACIÓN DEL RESTAURANTE
-
-// Obtener configuración
-router.get('/config', async (req, res) => {
-    try {
-        const config = await getOne('SELECT * FROM restaurant_config ORDER BY id DESC LIMIT 1');
-        res.json({
-            success: true,
-            config: config || {}
-        });
-    } catch (error) {
-        console.error('Error obteniendo configuración:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Actualizar configuración
-router.put('/config', async (req, res) => {
-    try {
-        const { 
-            restaurant_name, 
-            address, 
-            phone, 
-            tax_rate, 
-            voucher_expiry_hours, 
-            receipt_footer 
-        } = req.body;
-
-        // Verificar si existe configuración
-        const existingConfig = await getOne('SELECT id FROM restaurant_config ORDER BY id DESC LIMIT 1');
-
-        if (existingConfig) {
-            // Actualizar configuración existente
-            const fields = [];
-            const values = [];
-
-            if (restaurant_name) {
-                fields.push('restaurant_name = ?');
-                values.push(restaurant_name);
-            }
-            if (address !== undefined) {
-                fields.push('address = ?');
-                values.push(address);
-            }
-            if (phone !== undefined) {
-                fields.push('phone = ?');
-                values.push(phone);
-            }
-            if (tax_rate !== undefined) {
-                fields.push('tax_rate = ?');
-                values.push(tax_rate);
-            }
-            if (voucher_expiry_hours !== undefined) {
-                fields.push('voucher_expiry_hours = ?');
-                values.push(voucher_expiry_hours);
-            }
-            if (receipt_footer !== undefined) {
-                fields.push('receipt_footer = ?');
-                values.push(receipt_footer);
-            }
-
-            fields.push('updated_at = CURRENT_TIMESTAMP');
-            values.push(existingConfig.id);
-
-            await runQuery(
-                `UPDATE restaurant_config SET ${fields.join(', ')} WHERE id = ?`,
-                values
-            );
-        } else {
-            // Crear nueva configuración
-            await runQuery(
-                `INSERT INTO restaurant_config (restaurant_name, address, phone, tax_rate, voucher_expiry_hours, receipt_footer) 
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [restaurant_name, address, phone, tax_rate, voucher_expiry_hours, receipt_footer]
-            );
-        }
-
-        const config = await getOne('SELECT * FROM restaurant_config ORDER BY id DESC LIMIT 1');
-
-        res.json({
-            success: true,
-            message: 'Configuración actualizada exitosamente',
-            config: config
-        });
-    } catch (error) {
-        console.error('Error actualizando configuración:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Subir logo del restaurante
-router.post('/config/logo', upload.single('logo'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                message: 'No se ha seleccionado ningún archivo'
-            });
-        }
-
-        const logoPath = `/uploads/${req.file.filename}`;
-
-        // Actualizar configuración con el nuevo logo
-        const existingConfig = await getOne('SELECT id, logo_path FROM restaurant_config ORDER BY id DESC LIMIT 1');
-
-        if (existingConfig) {
-            // Eliminar logo anterior si existe
-            if (existingConfig.logo_path) {
-                const oldLogoPath = path.join(__dirname, '..', 'public', existingConfig.logo_path);
-                if (fs.existsSync(oldLogoPath)) {
-                    fs.unlinkSync(oldLogoPath);
+                today: {
+                    sales: todaySales,
+                    vouchers: todayVouchers
+                },
+                inventory: {
+                    lowStockCount: lowStockProducts.length,
+                    lowStockProducts: lowStockProducts.slice(0, 5) // Primeros 5
+                },
+                pending: {
+                    vouchers: pendingVouchers.length,
+                    coffeeVouchers: pendingCoffeeVouchers.length
+                },
+                totals: {
+                    users: totalUsers.length,
+                    products: totalProducts.length
                 }
             }
+        });
+        
+    } catch (error) {
+        console.error('Error obteniendo dashboard:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
-            await runQuery(
-                'UPDATE restaurant_config SET logo_path = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                [logoPath, existingConfig.id]
-            );
-        } else {
-            await runQuery(
-                'INSERT INTO restaurant_config (logo_path) VALUES (?)',
-                [logoPath]
-            );
+// Reporte de ventas por rango de fechas
+router.get('/reports/sales', async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        if (!startDate || !endDate) {
+            return res.status(400).json({ 
+                error: 'Fechas de inicio y fin son requeridas' 
+            });
         }
-
+        
+        const sales = await Sale.findByDateRange(startDate, endDate);
+        const stats = await Sale.getSalesStats(startDate, endDate);
+        const bestSelling = await Sale.getBestSellingProducts(startDate, endDate);
+        
         res.json({
             success: true,
-            message: 'Logo subido exitosamente',
-            logo_path: logoPath
+            report: {
+                period: { startDate, endDate },
+                stats,
+                sales,
+                bestSellingProducts: bestSelling
+            }
         });
+        
     } catch (error) {
-        console.error('Error subiendo logo:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
+        console.error('Error generando reporte de ventas:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Reporte de inventario
+router.get('/reports/inventory', async (req, res) => {
+    try {
+        const allProducts = await Product.findAll(false);
+        const lowStockProducts = await Product.findLowStock();
+        const categories = await Product.getCategories();
+        
+        // Agrupar por categoría
+        const inventoryByCategory = {};
+        for (const category of categories) {
+            inventoryByCategory[category] = allProducts.filter(p => p.category === category);
+        }
+        
+        res.json({
+            success: true,
+            report: {
+                totalProducts: allProducts.length,
+                activeProducts: allProducts.filter(p => p.active).length,
+                lowStockCount: lowStockProducts.length,
+                categories: categories.length,
+                inventoryByCategory,
+                lowStockProducts
+            }
         });
+        
+    } catch (error) {
+        console.error('Error generando reporte de inventario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Reporte de vouchers
+router.get('/reports/vouchers', async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        if (!startDate || !endDate) {
+            return res.status(400).json({ 
+                error: 'Fechas de inicio y fin son requeridas' 
+            });
+        }
+        
+        const stats = await Voucher.getValidationStats(startDate, endDate);
+        const pendingVouchers = await Voucher.findPendingValidation();
+        const pendingCoffeeVouchers = await Voucher.findPendingCoffeeValidation();
+        
+        res.json({
+            success: true,
+            report: {
+                period: { startDate, endDate },
+                stats,
+                pending: {
+                    general: pendingVouchers.length,
+                    coffee: pendingCoffeeVouchers.length
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error generando reporte de vouchers:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 

@@ -3,376 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Validador - TPV Restaurante</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>Validador - TPV Restaurante</title>
     <style>
-        :root {
-            --primary-color: #007bff;
-            --secondary-color: #6f42c1;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --info-color: #17a2b8;
-            --sidebar-width: 280px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
+            background: #f5f7fa;
+            color: #333;
         }
 
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: var(--sidebar-width);
-            background: linear-gradient(145deg, var(--primary-color), var(--secondary-color));
+        .header {
+            background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%);
             color: white;
-            overflow-y: auto;
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-header {
-            padding: 1.5rem;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .sidebar-header h4 {
-            margin: 0;
-            font-weight: 600;
-        }
-
-        .sidebar-nav {
-            list-style: none;
-            padding: 0;
-            margin: 1rem 0;
-        }
-
-        .sidebar-nav li {
-            margin: 0.25rem 0;
-        }
-
-        .sidebar-nav a {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1.5rem;
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: white;
-            transform: translateX(5px);
-        }
-
-        .sidebar-nav i {
-            width: 20px;
-            margin-right: 0.75rem;
-        }
-
-        .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-        }
-
-        .top-navbar {
-            background: white;
             padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .content-area {
-            padding: 2rem;
-        }
-
-        .validation-card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .scanner-area {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border: 3px dashed #dee2e6;
-            border-radius: 12px;
-            padding: 3rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .scanner-area.active {
-            border-color: var(--primary-color);
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-        }
-
-        .code-input-area {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            margin-bottom: 1.5rem;
-        }
-
-        .code-input {
-            font-size: 1.5rem;
-            text-align: center;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            padding: 1rem;
-            border: 3px solid #e9ecef;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .code-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        }
-
-        .validation-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1.5rem;
-        }
-
-        .validation-btn {
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            min-width: 150px;
-            transition: all 0.3s ease;
-            border: none;
-        }
-
-        .validation-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        }
-
-        .validation-btn:disabled {
-            opacity: 0.6;
-            transform: none;
-            cursor: not-allowed;
-        }
-
-        .voucher-info {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .voucher-status {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 1px;
-        }
-
-        .status-pending {
-            background: rgba(255, 193, 7, 0.2);
-            color: #856404;
-        }
-
-        .status-validated {
-            background: rgba(23, 162, 184, 0.2);
-            color: #0c5460;
-        }
-
-        .status-fully-validated {
-            background: rgba(40, 167, 69, 0.2);
-            color: #155724;
-        }
-
-        .status-expired {
-            background: rgba(220, 53, 69, 0.2);
-            color: #721c24;
-        }
-
-        .stats-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            border: none;
-        }
-
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-            margin-bottom: 1rem;
-        }
-
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
+        .header h1 {
+            font-size: 24px;
         }
 
         .user-info {
             display: flex;
             align-items: center;
+            gap: 1rem;
         }
 
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            margin-right: 0.5rem;
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            min-height: calc(100vh - 80px);
         }
 
-        .validation-history {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .history-item {
+        .section {
             background: white;
-            border-radius: 8px;
-            padding: 1rem;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .section h2 {
+            color: #17a2b8;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .validator-input {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 2rem;
+        }
+
+        .input-group label {
+            display: block;
             margin-bottom: 0.5rem;
-            border-left: 4px solid var(--success-color);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-weight: 600;
+            color: #333;
         }
 
-        .pending-vouchers {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-        }
-
-        .pending-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .code-input {
+            width: 100%;
             padding: 1rem;
-            margin-bottom: 0.5rem;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .pending-item:hover {
-            border-color: var(--primary-color);
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 4px;
+            border: 3px solid #17a2b8;
+            border-radius: 10px;
+            text-transform: uppercase;
             background: #f8f9fa;
-        }
-
-        .scanner-icon {
-            font-size: 4rem;
-            color: var(--primary-color);
             margin-bottom: 1rem;
         }
 
-        .quick-validate {
+        .code-input:focus {
+            outline: none;
             background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            margin-bottom: 1.5rem;
+            box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.2);
         }
 
-        .validation-type-selector {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            justify-content: center;
-        }
-
-        .type-btn {
-            padding: 1rem 1.5rem;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            background: white;
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            font-size: 16px;
             font-weight: 600;
-            flex: 1;
-            max-width: 200px;
+            transition: all 0.3s ease;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 0.5rem;
         }
 
-        .type-btn.selected {
-            border-color: var(--primary-color);
-            background: var(--primary-color);
+        .btn-primary {
+            background: #17a2b8;
             color: white;
         }
 
-        .type-btn:hover:not(.selected) {
-            border-color: var(--primary-color);
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            font-size: 14px;
+            border: 1px solid transparent;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeeba;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+
+        .voucher-details {
             background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid #17a2b8;
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .mobile-toggle {
-                display: block !important;
-            }
-
-            .validation-buttons {
-                flex-direction: column;
-            }
-
-            .validation-btn {
-                min-width: auto;
-            }
-
-            .type-btn {
-                max-width: none;
-            }
+        .voucher-code-display {
+            font-size: 32px;
+            font-weight: bold;
+            color: #17a2b8;
+            text-align: center;
+            letter-spacing: 4px;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px dashed #17a2b8;
         }
 
-        .mobile-toggle {
-            display: none;
+        .voucher-items {
+            margin: 1rem 0;
+        }
+
+        .voucher-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-quantity {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .coffee-badge {
+            background: #ffc107;
+            color: black;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-validated {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-partially-validated {
+            background: #cce5f7;
+            color: #0c5460;
+        }
+
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .pending-vouchers {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .pending-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pending-item:hover {
+            border-color: #17a2b8;
+            box-shadow: 0 2px 8px rgba(23, 162, 184, 0.2);
+        }
+
+        .pending-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .pending-code {
+            font-size: 18px;
+            font-weight: bold;
+            color: #17a2b8;
+        }
+
+        .pending-time {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .pending-info {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .scanner-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .scanner-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.6);
         }
 
         .loading {
@@ -381,912 +355,681 @@
             padding: 2rem;
         }
 
-        .table-custom {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #17a2b8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .table-custom thead {
-            background: var(--primary-color);
-            color: white;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .coffee-indicator {
-            color: #8b4513;
-            font-size: 1.2rem;
-        }
-
-        .validation-success {
-            background: linear-gradient(135deg, #d4edda, #c3e6cb);
-            border: 2px solid #28a745;
-            border-radius: 12px;
-            padding: 2rem;
+        .empty-state {
             text-align: center;
-            margin: 1.5rem 0;
+            color: #666;
+            font-style: italic;
+            padding: 3rem;
         }
 
-        .validation-error {
-            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-            border: 2px solid #dc3545;
-            border-radius: 12px;
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
             padding: 2rem;
-            text-align: center;
-            margin: 1.5rem 0;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .code-input {
+                font-size: 18px;
+                letter-spacing: 2px;
+            }
+
+            .voucher-code-display {
+                font-size: 24px;
+                letter-spacing: 2px;
+            }
+
+            .scanner-button {
+                bottom: 1rem;
+                right: 1rem;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .modal-content {
+                margin: 5% auto;
+                width: 95%;
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <i class="fas fa-check-double fa-2x mb-2" style="color: #ffc107;"></i>
-            <h4>Panel Validador</h4>
-            <small class="text-muted" id="userWelcome">Bienvenido</small>
+    <div class="header">
+        <h1>✅ Validador - TPV Restaurante</h1>
+        <div class="user-info">
+            <span id="userInfo">Cargando...</span>
+            <button class="btn btn-secondary" onclick="logout()">Cerrar Sesión</button>
         </div>
-        
-        <ul class="sidebar-nav">
-            <li><a href="#" data-section="validation" class="nav-link active">
-                <i class="fas fa-qrcode"></i> Validar Vale
-            </a></li>
-            <li><a href="#" data-section="dashboard" class="nav-link">
-                <i class="fas fa-chart-line"></i> Dashboard
-            </a></li>
-            <li><a href="#" data-section="pending" class="nav-link">
-                <i class="fas fa-clock"></i> Vales Pendientes
-            </a></li>
-            <li><a href="#" data-section="history" class="nav-link">
-                <i class="fas fa-history"></i> Historial
-            </a></li>
-            <li><a href="#" data-section="search" class="nav-link">
-                <i class="fas fa-search"></i> Buscar Vale
-            </a></li>
-            <li><hr class="my-2" style="border-color: rgba(255,255,255,0.2);"></li>
-            <li><a href="#" id="logoutBtn" class="nav-link">
-                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-            </a></li>
-        </ul>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Navbar -->
-        <nav class="top-navbar">
-            <button class="btn btn-outline-primary mobile-toggle" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h5 class="mb-0" id="pageTitle">Validar Vale</h5>
-            <div class="user-info">
-                <div class="user-avatar" id="userAvatar">V</div>
-                <div>
-                    <div class="fw-bold" id="userName">Validador</div>
-                    <small class="text-muted">Validador</small>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Content Area -->
-        <div class="content-area">
-            <div id="alertContainer"></div>
+    <div class="main-container">
+        <!-- Validator Input Section -->
+        <div class="section validator-input">
+            <h2>🔍 Validar Voucher</h2>
             
-            <!-- Validation Section -->
-            <div id="validation" class="content-section active">
-                <!-- Validation Type Selector -->
-                <div class="quick-validate">
-                    <h5 class="text-center mb-3">
-                        <i class="fas fa-hand-pointer me-2"></i>Selecciona el Tipo de Validación
-                    </h5>
-                    <div class="validation-type-selector">
-                        <div class="type-btn selected" data-type="food">
-                            <i class="fas fa-utensils fa-2x mb-2 d-block"></i>
-                            <strong>Validar Comida</strong>
-                            <div class="text-muted small">Primera validación</div>
-                        </div>
-                        <div class="type-btn" data-type="coffee">
-                            <i class="fas fa-coffee fa-2x mb-2 d-block"></i>
-                            <strong>Validar Café</strong>
-                            <div class="text-muted small">Segunda validación</div>
-                        </div>
-                    </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="todayValidated">0</div>
+                    <div class="stat-label">Validados Hoy</div>
                 </div>
-
-                <!-- Scanner Area -->
-                <div class="scanner-area" id="scannerArea">
-                    <i class="fas fa-qrcode scanner-icon"></i>
-                    <h4>Escanea el Código QR</h4>
-                    <p class="text-muted">Acerca el vale al escáner o ingresa el código manualmente</p>
-                    <button class="btn btn-primary btn-lg" id="startScanBtn" onclick="startScanner()">
-                        <i class="fas fa-camera me-2"></i>Activar Escáner
-                    </button>
-                </div>
-
-                <!-- Manual Code Input -->
-                <div class="code-input-area">
-                    <h5 class="mb-3">
-                        <i class="fas fa-keyboard me-2"></i>O Ingresa el Código Manualmente
-                    </h5>
-                    <div class="row justify-content-center">
-                        <div class="col-md-6">
-                            <input type="text" 
-                                   id="voucherCode" 
-                                   class="form-control code-input" 
-                                   placeholder="Ingresa el código del vale"
-                                   maxlength="20">
-                            <button class="btn btn-success btn-lg w-100 mt-3" onclick="validateVoucher()">
-                                <i class="fas fa-check me-2"></i>
-                                <span class="validate-text">Validar</span>
-                                <span class="validate-loading" style="display: none;">
-                                    <i class="fas fa-spinner fa-spin me-2"></i>Validando...
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Voucher Information -->
-                <div id="voucherInfo" style="display: none;">
-                    <!-- Content will be loaded here -->
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingCount">0</div>
+                    <div class="stat-label">Pendientes</div>
                 </div>
             </div>
 
-            <!-- Dashboard Section -->
-            <div id="dashboard" class="content-section">
-                <div class="row mb-4">
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stat-icon" style="background: var(--success-color);">
-                                <i class="fas fa-utensils"></i>
-                            </div>
-                            <h3 id="todayFoodValidations">0</h3>
-                            <p class="text-muted mb-0">Comidas Validadas Hoy</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stat-icon" style="background: var(--warning-color);">
-                                <i class="fas fa-coffee"></i>
-                            </div>
-                            <h3 id="todayCoffeeValidations">0</h3>
-                            <p class="text-muted mb-0">Cafés Validados Hoy</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stat-icon" style="background: var(--info-color);">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <h3 id="pendingFoodVouchers">0</h3>
-                            <p class="text-muted mb-0">Comidas Pendientes</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stat-icon" style="background: var(--secondary-color);">
-                                <i class="fas fa-coffee"></i>
-                            </div>
-                            <h3 id="pendingCoffeeVouchers">0</h3>
-                            <p class="text-muted mb-0">Cafés Pendientes</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="input-group">
+                <label for="voucherCode">Código del Voucher:</label>
+                <input type="text" id="voucherCode" class="code-input" placeholder="Ingrese código" maxlength="8" autocomplete="off">
+                <button class="btn btn-primary" onclick="validateVoucher()">🔍 Verificar Voucher</button>
+                <button class="btn btn-success" onclick="validateVoucher(true)" id="validateBtn" style="display: none;">✅ Validar</button>
+                <button class="btn btn-warning" onclick="validateCoffee()" id="validateCoffeeBtn" style="display: none;">☕ Validar Café</button>
+                <button class="btn btn-secondary" onclick="clearForm()">🗑️ Limpiar</button>
+            </div>
 
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="stats-card">
-                            <h5>Validaciones Recientes</h5>
-                            <div class="validation-history" id="recentValidations">
-                                <div class="loading">
-                                    <i class="fas fa-spinner fa-spin"></i> Cargando...
-                                </div>
-                            </div>
-                        </div>
+            <div id="alertContainer"></div>
+            <div class="loading" id="validationLoading"></div>
+
+            <!-- Voucher Details -->
+            <div id="voucherDetails" style="display: none;">
+                <div class="voucher-details">
+                    <div class="voucher-code-display" id="displayCode"></div>
+                    
+                    <div class="pending-header">
+                        <span><strong>Venta:</strong> <span id="saleNumber"></span></span>
+                        <span class="status-badge" id="statusBadge"></span>
                     </div>
-                    <div class="col-md-4">
-                        <div class="stats-card">
-                            <h5>Estadísticas de la Semana</h5>
-                            <div id="weekStats">
-                                <div class="loading">
-                                    <i class="fas fa-spinner fa-spin"></i> Cargando...
-                                </div>
-                            </div>
-                        </div>
+
+                    <div class="voucher-items" id="voucherItems"></div>
+
+                    <div class="pending-info">
+                        <p><strong>Creado:</strong> <span id="createdAt"></span></p>
+                        <p><strong>Expira:</strong> <span id="expiresAt"></span></p>
+                        <div id="validationInfo" style="margin-top: 0.5rem;"></div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Pending Vouchers Section -->
-            <div id="pending" class="content-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4><i class="fas fa-clock me-2"></i>Vales Pendientes de Validación</h4>
-                    <div>
-                        <select id="pendingFilter" class="form-select d-inline-block" style="width: auto;">
-                            <option value="">Todos</option>
-                            <option value="food">Solo Comida</option>
-                            <option value="coffee">Solo Café</option>
-                        </select>
-                        <button class="btn btn-outline-primary ms-2" onclick="loadPendingVouchers()">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="pending-vouchers" id="pendingVouchersContainer">
-                    <div class="loading">
-                        <i class="fas fa-spinner fa-spin"></i> Cargando vales pendientes...
-                    </div>
-                </div>
+        <!-- Pending Vouchers Section -->
+        <div class="section">
+            <h2>⏳ Vouchers Pendientes</h2>
+            
+            <div class="btn-group" style="margin-bottom: 1rem;">
+                <button class="btn btn-primary" id="generalTab" onclick="showPendingTab('general')">General</button>
+                <button class="btn btn-warning" id="coffeeTab" onclick="showPendingTab('coffee')">☕ Café</button>
             </div>
 
-            <!-- History Section -->
-            <div id="history" class="content-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4><i class="fas fa-history me-2"></i>Historial de Validaciones</h4>
-                    <div>
-                        <input type="date" id="historyDateFilter" class="form-control d-inline-block" style="width: auto;">
-                        <button class="btn btn-outline-primary ms-2" onclick="loadValidationHistory()">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="stats-card">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom">
-                            <thead>
-                                <tr>
-                                    <th>Código Vale</th>
-                                    <th>Tipo Validación</th>
-                                    <th>ID Venta</th>
-                                    <th>Fecha/Hora</th>
-                                    <th>Estado Actual</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyTable">
-                                <tr>
-                                    <td colspan="5" class="text-center">
-                                        <div class="loading">
-                                            <i class="fas fa-spinner fa-spin"></i> Cargando historial...
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Search Section -->
-            <div id="search" class="content-section">
-                <div class="stats-card">
-                    <h4 class="mb-4"><i class="fas fa-search me-2"></i>Buscar Vale</h4>
-                    <div class="row justify-content-center">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Código del Vale</label>
-                                <input type="text" 
-                                       id="searchCode" 
-                                       class="form-control code-input" 
-                                       placeholder="Ingresa el código a buscar">
-                            </div>
-                            <div class="d-grid">
-                                <button class="btn btn-primary btn-lg" onclick="searchVoucher()">
-                                    <i class="fas fa-search me-2"></i>Buscar Vale
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="searchResult" style="display: none;">
-                    <!-- Search results will be loaded here -->
-                </div>
+            <div class="pending-vouchers" id="pendingVouchers">
+                <div class="loading" id="pendingLoading"></div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Scanner Button -->
+    <button class="scanner-button" onclick="toggleScanner()" title="Escanear QR">📱</button>
+
+    <!-- Scanner Modal -->
+    <div id="scannerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📱 Escáner de Códigos</h3>
+                <span class="close" onclick="closeScannerModal()">&times;</span>
+            </div>
+            <div id="scannerContainer">
+                <p>Escáner de cámara no disponible en esta demo.</p>
+                <p>Use el campo de entrada manual para validar vouchers.</p>
+                <input type="text" id="scannerInput" class="code-input" placeholder="Código escaneado" maxlength="8">
+                <button class="btn btn-primary" onclick="validateFromScanner()">Validar Código</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Global variables
-        let token = localStorage.getItem('tpv_token');
-        let user = JSON.parse(localStorage.getItem('tpv_user') || '{}');
-        let config = {};
-        let currentValidationType = 'food';
+        // Variables globales
+        let currentVoucher = null;
+        let pendingVouchers = [];
+        let pendingCoffeeVouchers = [];
+        let currentTab = 'general';
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!token || !['admin', 'validator'].includes(user.role)) {
-                window.location.href = '/login';
-                return;
+        // Inicialización
+        window.addEventListener('load', async () => {
+            try {
+                await checkAuth();
+                await loadUserInfo();
+                await loadStats();
+                await loadPendingVouchers();
+                setupEventListeners();
+            } catch (error) {
+                console.error('Error durante la inicialización:', error);
+                showAlert('Error de conexión', 'error');
             }
-
-            initializeApp();
         });
 
-        function initializeApp() {
-            // Set user info
-            document.getElementById('userName').textContent = user.full_name || user.username;
-            document.getElementById('userWelcome').textContent = `Bienvenido, ${user.full_name || user.username}`;
-            document.getElementById('userAvatar').textContent = (user.full_name || user.username).charAt(0).toUpperCase();
-
-            // Setup event listeners
-            setupEventListeners();
-
-            // Load initial data
-            loadConfig();
-            loadDashboard();
+        // Autenticación
+        async function checkAuth() {
+            const response = await fetch('/api/auth/check');
+            const data = await response.json();
+            
+            if (!data.authenticated || !['validator', 'admin'].includes(data.user?.role)) {
+                window.location.href = '/login.html';
+                return;
+            }
         }
 
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('userInfo').textContent = `${data.user.fullName} (${data.user.role})`;
+                }
+            } catch (error) {
+                console.error('Error cargando info del usuario:', error);
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            } catch (error) {
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Event Listeners
         function setupEventListeners() {
-            // Navigation
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    if (this.id === 'logoutBtn') return;
-                    e.preventDefault();
-                    
-                    const section = this.dataset.section;
-                    showSection(section);
-                    
-                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                    this.classList.add('active');
-                });
+            const voucherInput = document.getElementById('voucherCode');
+            
+            // Auto-validar cuando se ingrese un código de 8 caracteres
+            voucherInput.addEventListener('input', (e) => {
+                const value = e.target.value.toUpperCase().slice(0, 8);
+                e.target.value = value;
+                
+                if (value.length === 8) {
+                    setTimeout(() => validateVoucher(), 300);
+                }
             });
 
-            // Logout
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-
-            // Mobile sidebar toggle
-            document.getElementById('sidebarToggle').addEventListener('click', function() {
-                document.getElementById('sidebar').classList.toggle('show');
-            });
-
-            // Validation type selector
-            document.querySelectorAll('.type-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
-                    this.classList.add('selected');
-                    currentValidationType = this.dataset.type;
-                });
-            });
-
-            // Voucher code input
-            document.getElementById('voucherCode').addEventListener('input', function() {
-                this.value = this.value.toUpperCase();
-            });
-
-            // Enter key to validate
-            document.getElementById('voucherCode').addEventListener('keypress', function(e) {
+            // Enter key para validar
+            voucherInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     validateVoucher();
                 }
             });
 
-            // Search code input
-            document.getElementById('searchCode').addEventListener('input', function() {
-                this.value = this.value.toUpperCase();
-            });
-
-            document.getElementById('searchCode').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    searchVoucher();
-                }
-            });
+            // Auto-focus en el input
+            voucherInput.focus();
         }
 
-        function showSection(sectionName) {
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-
-            // Show selected section
-            document.getElementById(sectionName).classList.add('active');
-
-            // Update page title
-            const titles = {
-                validation: 'Validar Vale',
-                dashboard: 'Dashboard',
-                pending: 'Vales Pendientes',
-                history: 'Historial',
-                search: 'Buscar Vale'
-            };
-
-            document.getElementById('pageTitle').textContent = titles[sectionName];
-
-            // Load section data
-            switch(sectionName) {
-                case 'pending':
-                    loadPendingVouchers();
-                    break;
-                case 'history':
-                    loadValidationHistory();
-                    break;
-            }
-        }
-
-        async function apiCall(endpoint, options = {}) {
-            const config = {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
-                ...options
-            };
-
+        // Carga de datos
+        async function loadStats() {
             try {
-                const response = await fetch(endpoint, config);
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.message || 'Error en la petición');
-                }
-
-                return data;
-            } catch (error) {
-                console.error('API Error:', error);
-                throw error;
-            }
-        }
-
-        async function loadConfig() {
-            try {
-                const data = await apiCall('/validator/config');
-                config = data.config;
-            } catch (error) {
-                console.error('Error loading config:', error);
-            }
-        }
-
-        async function loadDashboard() {
-            try {
-                const data = await apiCall('/validator/dashboard');
-                
-                document.getElementById('todayFoodValidations').textContent = data.dashboard.today.food_validations;
-                document.getElementById('todayCoffeeValidations').textContent = data.dashboard.today.coffee_validations;
-                document.getElementById('pendingFoodVouchers').textContent = data.dashboard.pending.food_vouchers;
-                document.getElementById('pendingCoffeeVouchers').textContent = data.dashboard.pending.coffee_vouchers;
-
-                updateRecentValidations(data.dashboard.recent_validations || []);
-                updateWeekStats(data.dashboard.week);
-
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-            }
-        }
-
-        function updateRecentValidations(validations) {
-            const container = document.getElementById('recentValidations');
-            
-            if (validations.length === 0) {
-                container.innerHTML = '<p class="text-muted text-center">No hay validaciones recientes</p>';
-                return;
-            }
-
-            const html = validations.map(validation => `
-                <div class="history-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>${validation.code}</strong>
-                            <div class="text-muted small">
-                                ${validation.validation_type === 'food' ? 
-                                    '<i class="fas fa-utensils me-1"></i>Comida' : 
-                                    '<i class="fas fa-coffee me-1"></i>Café'
-                                }
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <div class="small text-muted">${formatDateTime(validation.validated_at)}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            container.innerHTML = html;
-        }
-
-        function updateWeekStats(weekStats) {
-            const container = document.getElementById('weekStats');
-            
-            const html = `
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span><i class="fas fa-utensils me-2"></i>Comidas:</span>
-                        <strong>${weekStats.food_validations}</strong>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span><i class="fas fa-coffee me-2"></i>Cafés:</span>
-                        <strong>${weekStats.coffee_validations}</strong>
-                    </div>
-                </div>
-                <div class="mb-0">
-                    <div class="d-flex justify-content-between">
-                        <span><strong>Total:</strong></span>
-                        <strong>${weekStats.total_validations}</strong>
-                    </div>
-                </div>
-            `;
-
-            container.innerHTML = html;
-        }
-
-        async function validateVoucher() {
-            const code = document.getElementById('voucherCode').value.trim();
-            
-            if (!code) {
-                showAlert('Por favor ingresa un código de vale', 'warning');
-                return;
-            }
-
-            const validateText = document.querySelector('.validate-text');
-            const validateLoading = document.querySelector('.validate-loading');
-            
-            validateText.style.display = 'none';
-            validateLoading.style.display = 'inline';
-
-            try {
-                // First, get voucher information
-                const voucherData = await apiCall(`/validator/vouchers/${code}`);
-                const voucher = voucherData.voucher;
-
-                // Show voucher info
-                displayVoucherInfo(voucher);
-
-                // Perform validation based on selected type
-                const validationEndpoint = currentValidationType === 'food' ? 
-                    `/validator/vouchers/${code}/validate-food` : 
-                    `/validator/vouchers/${code}/validate-coffee`;
-
-                const validationResponse = await apiCall(validationEndpoint, {
-                    method: 'POST'
+                const response = await fetch('/api/validator/stats/today', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    }
                 });
-
-                // Show success message
-                showValidationSuccess(validationResponse);
                 
-                // Clear input
-                document.getElementById('voucherCode').value = '';
-
-                // Reload dashboard data
-                loadDashboard();
-
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('todayValidated').textContent = data.stats.today.validated;
+                    document.getElementById('pendingCount').textContent = data.stats.pending.general;
+                }
             } catch (error) {
-                console.error('Error validating voucher:', error);
-                showValidationError(error.message);
-            } finally {
-                validateText.style.display = 'inline';
-                validateLoading.style.display = 'none';
+                console.error('Error cargando estadísticas:', error);
             }
-        }
-
-        function displayVoucherInfo(voucher) {
-            const container = document.getElementById('voucherInfo');
-            
-            const statusInfo = voucher.status_info;
-            let statusClass = 'status-pending';
-            let statusText = 'Pendiente';
-
-            switch (statusInfo.status) {
-                case 'validated':
-                    statusClass = 'status-validated';
-                    statusText = 'Comida Validada';
-                    break;
-                case 'fully_validated':
-                    statusClass = 'status-fully-validated';
-                    statusText = 'Completamente Validado';
-                    break;
-                case 'expired':
-                    statusClass = 'status-expired';
-                    statusText = 'Expirado';
-                    break;
-            }
-
-            const html = `
-                <div class="voucher-info">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>Información del Vale</h5>
-                            <p><strong>Código:</strong> ${voucher.code}</p>
-                            <p><strong>ID Venta:</strong> #${voucher.sale_id}</p>
-                            <p><strong>Total Venta:</strong> $${voucher.sale_total}</p>
-                            <p><strong>Cajero:</strong> ${voucher.cashier_name}</p>
-                            <p>
-                                <strong>¿Incluye Café?:</strong> 
-                                ${voucher.has_coffee ? 
-                                    '<i class="fas fa-coffee coffee-indicator"></i> Sí' : 
-                                    'No'
-                                }
-                            </p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Estado del Vale</h5>
-                            <p><span class="voucher-status ${statusClass}">${statusText}</span></p>
-                            <p><strong>Expira:</strong> ${formatDateTime(voucher.expires_at)}</p>
-                            <p><strong>Próximo paso:</strong> ${getNextStepText(statusInfo.next_step)}</p>
-                            ${voucher.food_validated_at ? 
-                                `<p class="text-success"><i class="fas fa-check"></i> Comida validada: ${formatDateTime(voucher.food_validated_at)}</p>` : 
-                                ''
-                            }
-                            ${voucher.coffee_validated_at ? 
-                                `<p class="text-success"><i class="fas fa-check"></i> Café validado: ${formatDateTime(voucher.coffee_validated_at)}</p>` : 
-                                ''
-                            }
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            container.innerHTML = html;
-            container.style.display = 'block';
-        }
-
-        function getNextStepText(nextStep) {
-            switch(nextStep) {
-                case 'food':
-                    return 'Validar comida';
-                case 'coffee':
-                    return 'Validar café';
-                case 'completed':
-                    return 'Completado';
-                case 'expired':
-                    return 'Vale expirado';
-                default:
-                    return 'Desconocido';
-            }
-        }
-
-        function showValidationSuccess(response) {
-            const container = document.getElementById('voucherInfo');
-            const successHtml = `
-                <div class="validation-success">
-                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                    <h4 class="text-success">¡Validación Exitosa!</h4>
-                    <p class="mb-0">${response.message}</p>
-                </div>
-            `;
-            
-            container.innerHTML = successHtml;
-            container.style.display = 'block';
-
-            // Clear after 5 seconds
-            setTimeout(() => {
-                container.style.display = 'none';
-            }, 5000);
-        }
-
-        function showValidationError(message) {
-            const container = document.getElementById('voucherInfo');
-            const errorHtml = `
-                <div class="validation-error">
-                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
-                    <h4 class="text-danger">Error en Validación</h4>
-                    <p class="mb-0">${message}</p>
-                </div>
-            `;
-            
-            container.innerHTML = errorHtml;
-            container.style.display = 'block';
-
-            // Clear after 5 seconds
-            setTimeout(() => {
-                container.style.display = 'none';
-            }, 5000);
         }
 
         async function loadPendingVouchers() {
+            const loading = document.getElementById('pendingLoading');
+            loading.style.display = 'block';
+            
             try {
-                const filter = document.getElementById('pendingFilter').value;
-                const data = await apiCall(`/validator/vouchers/pending?validation_type=${filter}`);
+                // Cargar vouchers pendientes generales
+                const generalResponse = await fetch('/api/validator/pending', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    }
+                });
+                const generalData = await generalResponse.json();
                 
-                const container = document.getElementById('pendingVouchersContainer');
+                // Cargar vouchers pendientes de café
+                const coffeeResponse = await fetch('/api/validator/pending-coffee', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    }
+                });
+                const coffeeData = await coffeeResponse.json();
                 
-                if (data.vouchers.length === 0) {
-                    container.innerHTML = '<div class="text-center text-muted py-4">No hay vales pendientes</div>';
-                    return;
+                if (generalData.success && coffeeData.success) {
+                    pendingVouchers = generalData.vouchers;
+                    pendingCoffeeVouchers = coffeeData.vouchers;
+                    renderPendingVouchers();
                 }
+            } catch (error) {
+                console.error('Error cargando vouchers pendientes:', error);
+                showAlert('Error cargando vouchers pendientes', 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
 
-                const html = data.vouchers.map(voucher => `
-                    <div class="pending-item" onclick="loadVoucherForValidation('${voucher.code}')">
-                        <div>
-                            <strong>${voucher.code}</strong>
-                            <div class="text-muted small">
-                                Venta #${voucher.sale_id} - $${voucher.sale_total}
-                                ${voucher.has_coffee ? ' <i class="fas fa-coffee coffee-indicator"></i>' : ''}
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge bg-${voucher.status === 'pending' ? 'warning' : 'info'}">
-                                ${voucher.status === 'pending' ? 'Comida Pendiente' : 'Café Pendiente'}
-                            </span>
-                            <div class="text-muted small">Expira: ${formatDateTime(voucher.expires_at)}</div>
-                        </div>
+        function renderPendingVouchers() {
+            const container = document.getElementById('pendingVouchers');
+            const vouchers = currentTab === 'general' ? pendingVouchers : pendingCoffeeVouchers;
+            
+            if (vouchers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div>📭</div>
+                        <p>No hay vouchers pendientes</p>
+                        <p>Los vouchers aparecerán aquí cuando sean generados</p>
                     </div>
-                `).join('');
-
-                container.innerHTML = html;
-
-            } catch (error) {
-                console.error('Error loading pending vouchers:', error);
-            }
-        }
-
-        function loadVoucherForValidation(code) {
-            // Switch to validation tab
-            document.querySelector('[data-section="validation"]').click();
-            
-            // Set the code in the input
-            document.getElementById('voucherCode').value = code;
-            
-            // Focus on the input
-            document.getElementById('voucherCode').focus();
-        }
-
-        async function loadValidationHistory() {
-            try {
-                const data = await apiCall('/validator/validations/history');
-                updateValidationHistoryTable(data.validations);
-            } catch (error) {
-                console.error('Error loading validation history:', error);
-            }
-        }
-
-        function updateValidationHistoryTable(validations) {
-            const tbody = document.getElementById('historyTable');
-            
-            if (validations.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay validaciones en el historial</td></tr>';
+                `;
                 return;
             }
 
-            const html = validations.map(validation => `
-                <tr>
-                    <td><strong>${validation.code}</strong></td>
-                    <td>
-                        ${validation.validation_type === 'food' ? 
-                            '<i class="fas fa-utensils text-success me-1"></i>Comida' : 
-                            '<i class="fas fa-coffee text-warning me-1"></i>Café'
-                        }
-                    </td>
-                    <td>#${validation.sale_id}</td>
-                    <td>${formatDateTime(validation.validated_at)}</td>
-                    <td>
-                        <span class="badge bg-${getVoucherStatusColor(validation.status)}">
-                            ${getVoucherStatusLabel(validation.status)}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
-
-            tbody.innerHTML = html;
+            container.innerHTML = vouchers.map(voucher => {
+                const createdDate = new Date(voucher.createdAt).toLocaleString();
+                const status = currentTab === 'general' ? 'Pendiente de validación' : 'Pendiente validación café';
+                
+                return `
+                    <div class="pending-item" onclick="loadVoucherDetails('${voucher.code}')">
+                        <div class="pending-header">
+                            <span class="pending-code">${voucher.code}</span>
+                            <span class="pending-time">${createdDate}</span>
+                        </div>
+                        <div class="pending-info">
+                            <strong>Venta:</strong> ${voucher.saleNumber || 'N/A'}
+                        </div>
+                        <div class="pending-info">
+                            <span class="status-badge status-pending">${status}</span>
+                            ${voucher.requiresCoffeeValidation ? '<span class="coffee-badge">☕ Café</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        async function searchVoucher() {
-            const code = document.getElementById('searchCode').value.trim();
+        function showPendingTab(tab) {
+            currentTab = tab;
+            
+            // Actualizar botones
+            document.getElementById('generalTab').className = tab === 'general' ? 'btn btn-primary' : 'btn btn-secondary';
+            document.getElementById('coffeeTab').className = tab === 'coffee' ? 'btn btn-warning' : 'btn btn-secondary';
+            
+            renderPendingVouchers();
+        }
+
+        // Validación de vouchers
+        async function validateVoucher(directValidate = false) {
+            const codeInput = document.getElementById('voucherCode');
+            const code = codeInput.value.trim().toUpperCase();
             
             if (!code) {
-                showAlert('Por favor ingresa un código de vale', 'warning');
+                showAlert('Ingrese un código de voucher', 'error');
+                codeInput.focus();
                 return;
             }
 
+            if (code.length !== 8) {
+                showAlert('El código debe tener 8 caracteres', 'error');
+                codeInput.focus();
+                return;
+            }
+
+            const loading = document.getElementById('validationLoading');
+            loading.style.display = 'block';
+            
             try {
-                const data = await apiCall(`/validator/vouchers/${code}`);
-                displaySearchResult(data.voucher);
+                if (directValidate) {
+                    await performValidation(code);
+                } else {
+                    await checkVoucherStatus(code);
+                }
             } catch (error) {
-                console.error('Error searching voucher:', error);
-                showAlert('Vale no encontrado: ' + error.message, 'danger');
-                document.getElementById('searchResult').style.display = 'none';
+                console.error('Error validando voucher:', error);
+                showAlert('Error de conexión al validar', 'error');
+            } finally {
+                loading.style.display = 'none';
             }
         }
 
-        function displaySearchResult(voucher) {
-            const container = document.getElementById('searchResult');
+        async function checkVoucherStatus(code) {
+            const response = await fetch(`/api/validator/check/${code}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                }
+            });
             
-            const statusInfo = voucher.status_info;
-            let statusClass = getVoucherStatusColor(statusInfo.status);
-            let statusText = getVoucherStatusLabel(statusInfo.status);
+            const data = await response.json();
+            
+            if (data.success) {
+                currentVoucher = data.voucher;
+                displayVoucherDetails(data.voucher, data.status);
+                showValidationOptions(data);
+            } else {
+                showAlert(data.error || 'Voucher no encontrado', 'error');
+                hideVoucherDetails();
+            }
+        }
 
-            const html = `
-                <div class="stats-card mt-4">
-                    <h5>Resultado de Búsqueda</h5>
-                    <div class="voucher-info">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Información del Vale</h6>
-                                <p><strong>Código:</strong> ${voucher.code}</p>
-                                <p><strong>ID Venta:</strong> #${voucher.sale_id}</p>
-                                <p><strong>Total Venta:</strong> $${voucher.sale_total}</p>
-                                <p><strong>Cajero:</strong> ${voucher.cashier_name}</p>
-                                <p>
-                                    <strong>¿Incluye Café?:</strong> 
-                                    ${voucher.has_coffee ? 
-                                        '<i class="fas fa-coffee coffee-indicator"></i> Sí' : 
-                                        'No'
-                                    }
-                                </p>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Estado y Validaciones</h6>
-                                <p><span class="badge bg-${statusClass}">${statusText}</span></p>
-                                <p><strong>Creado:</strong> ${formatDateTime(voucher.created_at)}</p>
-                                <p><strong>Expira:</strong> ${formatDateTime(voucher.expires_at)}</p>
-                                ${voucher.food_validated_at ? 
-                                    `<p class="text-success"><i class="fas fa-check"></i> Comida: ${formatDateTime(voucher.food_validated_at)}</p>` : 
-                                    ''
-                                }
-                                ${voucher.coffee_validated_at ? 
-                                    `<p class="text-success"><i class="fas fa-check"></i> Café: ${formatDateTime(voucher.coffee_validated_at)}</p>` : 
-                                    ''
-                                }
-                            </div>
-                        </div>
+        async function performValidation(code) {
+            const response = await fetch('/api/validator/validate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                },
+                body: JSON.stringify({ code })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert(`✅ Voucher ${code} validado exitosamente`, 'success');
+                
+                if (data.requiresCoffeeValidation) {
+                    showAlert('⚠️ Este voucher requiere validación adicional en la estación de café', 'warning');
+                }
+                
+                clearForm();
+                await loadStats();
+                await loadPendingVouchers();
+            } else {
+                showAlert(data.error || 'Error validando voucher', 'error');
+                
+                if (data.voucher) {
+                    currentVoucher = data.voucher;
+                    displayVoucherDetails(data.voucher, data.status);
+                }
+            }
+        }
+
+        async function validateCoffee() {
+            if (!currentVoucher) {
+                showAlert('No hay voucher seleccionado', 'error');
+                return;
+            }
+
+            const loading = document.getElementById('validationLoading');
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/validator/validate-coffee', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    },
+                    body: JSON.stringify({ code: currentVoucher.code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(`☕ Café validado exitosamente para voucher ${currentVoucher.code}`, 'success');
+                    clearForm();
+                    await loadStats();
+                    await loadPendingVouchers();
+                } else {
+                    showAlert(data.error || 'Error validando café', 'error');
+                }
+            } catch (error) {
+                console.error('Error validando café:', error);
+                showAlert('Error de conexión al validar café', 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        async function loadVoucherDetails(code) {
+            document.getElementById('voucherCode').value = code;
+            await checkVoucherStatus(code);
+        }
+
+        // Display functions
+        function displayVoucherDetails(voucher, status) {
+            document.getElementById('displayCode').textContent = voucher.code;
+            document.getElementById('saleNumber').textContent = voucher.saleNumber || 'N/A';
+            
+            // Status badge
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.textContent = getStatusText(status);
+            statusBadge.className = `status-badge status-${status.replace('_', '-')}`;
+            
+            // Items
+            const itemsContainer = document.getElementById('voucherItems');
+            itemsContainer.innerHTML = voucher.items?.map(item => `
+                <div class="voucher-item">
+                    <div class="item-info">
+                        <div class="item-name">${item.productName}</div>
+                        <div class="item-quantity">Cantidad: ${item.quantity}</div>
                     </div>
+                    ${item.requiresCoffeeValidation ? '<span class="coffee-badge">☕ Café</span>' : ''}
                 </div>
-            `;
-
-            container.innerHTML = html;
-            container.style.display = 'block';
+            `).join('') || '<p>No hay items disponibles</p>';
+            
+            // Fechas
+            document.getElementById('createdAt').textContent = new Date(voucher.createdAt).toLocaleString();
+            document.getElementById('expiresAt').textContent = new Date(voucher.expiresAt).toLocaleString();
+            
+            // Información de validación
+            const validationInfo = document.getElementById('validationInfo');
+            let validationText = '';
+            
+            if (voucher.isValidated && voucher.validatedAt) {
+                validationText += `<p><strong>Validado:</strong> ${new Date(voucher.validatedAt).toLocaleString()}</p>`;
+            }
+            
+            if (voucher.isCoffeeValidated && voucher.coffeeValidatedAt) {
+                validationText += `<p><strong>Café validado:</strong> ${new Date(voucher.coffeeValidatedAt).toLocaleString()}</p>`;
+            }
+            
+            validationInfo.innerHTML = validationText;
+            
+            document.getElementById('voucherDetails').style.display = 'block';
         }
 
-        // Utility functions
-        function getVoucherStatusColor(status) {
-            const colors = {
-                pending: 'warning',
-                validated: 'info',
-                fully_validated: 'success'
+        function showValidationOptions(data) {
+            const validateBtn = document.getElementById('validateBtn');
+            const validateCoffeeBtn = document.getElementById('validateCoffeeBtn');
+            
+            validateBtn.style.display = 'none';
+            validateCoffeeBtn.style.display = 'none';
+            
+            if (data.canValidate) {
+                validateBtn.style.display = 'block';
+            }
+            
+            if (data.canValidateCoffee) {
+                validateCoffeeBtn.style.display = 'block';
+            }
+        }
+
+        function hideVoucherDetails() {
+            document.getElementById('voucherDetails').style.display = 'none';
+            document.getElementById('validateBtn').style.display = 'none';
+            document.getElementById('validateCoffeeBtn').style.display = 'none';
+        }
+
+        function getStatusText(status) {
+            const statusTexts = {
+                'pending': 'Pendiente',
+                'validated': 'Validado',
+                'partially_validated': 'Parcialmente Validado',
+                'fully_validated': 'Completamente Validado',
+                'expired': 'Expirado',
+                'not_found': 'No Encontrado'
             };
-            return colors[status] || 'secondary';
+            
+            return statusTexts[status] || status;
         }
 
-        function getVoucherStatusLabel(status) {
-            const labels = {
-                pending: 'Pendiente',
-                validated: 'Comida Validada',
-                fully_validated: 'Completado'
-            };
-            return labels[status] || status;
+        function clearForm() {
+            document.getElementById('voucherCode').value = '';
+            document.getElementById('voucherCode').focus();
+            hideVoucherDetails();
+            currentVoucher = null;
+            clearAlerts();
         }
 
-        function formatDateTime(dateString) {
-            return new Date(dateString).toLocaleString('es-ES');
+        // Scanner functionality
+        function toggleScanner() {
+            document.getElementById('scannerModal').style.display = 'block';
+            document.getElementById('scannerInput').focus();
         }
 
-        function showAlert(message, type) {
-            const alertHtml = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    <i class="fas ${getAlertIcon(type)} me-2"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            document.getElementById('alertContainer').innerHTML = alertHtml;
+        function closeScannerModal() {
+            document.getElementById('scannerModal').style.display = 'none';
+            document.getElementById('scannerInput').value = '';
+        }
 
+        function validateFromScanner() {
+            const code = document.getElementById('scannerInput').value.trim().toUpperCase();
+            if (code) {
+                document.getElementById('voucherCode').value = code;
+                closeScannerModal();
+                validateVoucher();
+            }
+        }
+
+        // Alert system
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert_' + Date.now();
+            
+            const alert = document.createElement('div');
+            alert.id = alertId;
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            // Auto-remove after 5 seconds
             setTimeout(() => {
-                const alert = document.querySelector('#alertContainer .alert');
-                if (alert) alert.remove();
+                const element = document.getElementById(alertId);
+                if (element) {
+                    element.remove();
+                }
             }, 5000);
         }
 
-        function getAlertIcon(type) {
-            const icons = {
-                success: 'fa-check-circle',
-                danger: 'fa-exclamation-triangle',
-                warning: 'fa-exclamation-circle',
-                info: 'fa-info-circle'
-            };
-            return icons[type] || 'fa-info-circle';
+        function clearAlerts() {
+            document.getElementById('alertContainer').innerHTML = '';
         }
 
-        function startScanner() {
-            // TODO: Implement QR scanner functionality
-            showAlert('Funcionalidad de escáner QR en desarrollo', 'info');
+        // Cerrar modales con ESC o click fuera
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeScannerModal();
+            }
+        });
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('scannerModal');
+            if (event.target === modal) {
+                closeScannerModal();
+            }
         }
 
-        function logout() {
-            localStorage.removeItem('tpv_token');
-            localStorage.removeItem('tpv_user');
-            window.location.href = '/login';
-        }
+        // Auto-refresh pending vouchers every 30 seconds
+        setInterval(async () => {
+            try {
+                await loadStats();
+                await loadPendingVouchers();
+            } catch (error) {
+                console.error('Error en auto-refresh:', error);
+            }
+        }, 30000);
     </script>
 </body>
 </html>

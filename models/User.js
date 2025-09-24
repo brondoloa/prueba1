@@ -1,259 +1,135 @@
 const bcrypt = require('bcryptjs');
-const { runQuery, getOne, getAll } = require('../config/database');
+const database = require('../config/database');
 
 class User {
-    constructor(data) {
+    constructor(data = {}) {
         this.id = data.id;
         this.username = data.username;
         this.password = data.password;
         this.role = data.role;
-        this.full_name = data.full_name;
-        this.active = data.active;
-        this.created_at = data.created_at;
-        this.updated_at = data.updated_at;
+        this.fullName = data.fullName;
+        this.active = data.active !== undefined ? data.active : true;
+        this.createdAt = data.createdAt;
+        this.updatedAt = data.updatedAt;
     }
 
-    // Crear nuevo usuario
-    static async create(userData) {
+    // Crear usuario
+    async create() {
         try {
-            const { username, password, role, full_name } = userData;
+            const hashedPassword = await bcrypt.hash(this.password, 10);
+            const currentTime = new Date().toISOString();
             
-            // Verificar si el usuario ya existe
-            const existingUser = await getOne(
-                'SELECT id FROM users WHERE username = ?', 
-                [username]
+            const result = await database.run(
+                `INSERT INTO users (username, password, role, full_name, active, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [this.username, hashedPassword, this.role, this.fullName, this.active, currentTime, currentTime]
             );
             
-            if (existingUser) {
-                throw new Error('El nombre de usuario ya existe');
-            }
-
-            // Validar rol
-            const validRoles = ['admin', 'cashier', 'validator'];
-            if (!validRoles.includes(role)) {
-                throw new Error('Rol no válido');
-            }
-
-            // Hashear contraseña
-            const hashedPassword = await bcrypt.hash(password, 10);
-
-            // Insertar usuario
-            const result = await runQuery(
-                `INSERT INTO users (username, password, role, full_name) 
-                 VALUES (?, ?, ?, ?)`,
-                [username, hashedPassword, role, full_name]
-            );
-
-            return await User.findById(result.id);
+            this.id = result.id;
+            this.createdAt = currentTime;
+            this.updatedAt = currentTime;
+            return this;
         } catch (error) {
-            throw new Error(`Error creando usuario: ${error.message}`);
-        }
-    }
-
-    // Buscar usuario por ID
-    static async findById(id) {
-        try {
-            const row = await getOne(
-                'SELECT * FROM users WHERE id = ? AND active = 1', 
-                [id]
-            );
-            return row ? new User(row) : null;
-        } catch (error) {
-            throw new Error(`Error buscando usuario: ${error.message}`);
-        }
-    }
-
-    // Buscar usuario por nombre de usuario
-    static async findByUsername(username) {
-        try {
-            const row = await getOne(
-                'SELECT * FROM users WHERE username = ? AND active = 1', 
-                [username]
-            );
-            return row ? new User(row) : null;
-        } catch (error) {
-            throw new Error(`Error buscando usuario: ${error.message}`);
-        }
-    }
-
-    // Obtener todos los usuarios
-    static async findAll() {
-        try {
-            const rows = await getAll(
-                'SELECT * FROM users WHERE active = 1 ORDER BY full_name'
-            );
-            return rows.map(row => new User(row));
-        } catch (error) {
-            throw new Error(`Error obteniendo usuarios: ${error.message}`);
-        }
-    }
-
-    // Obtener usuarios por rol
-    static async findByRole(role) {
-        try {
-            const rows = await getAll(
-                'SELECT * FROM users WHERE role = ? AND active = 1 ORDER BY full_name',
-                [role]
-            );
-            return rows.map(row => new User(row));
-        } catch (error) {
-            throw new Error(`Error obteniendo usuarios por rol: ${error.message}`);
-        }
-    }
-
-    // Validar contraseña
-    async validatePassword(password) {
-        try {
-            return await bcrypt.compare(password, this.password);
-        } catch (error) {
-            throw new Error(`Error validando contraseña: ${error.message}`);
+            throw new Error(`Error al crear usuario: ${error.message}`);
         }
     }
 
     // Actualizar usuario
-    static async update(id, updateData) {
+    async update() {
         try {
-            const { username, full_name, role, active } = updateData;
-            let { password } = updateData;
-
-            // Si se proporciona nueva contraseña, hashearla
-            if (password) {
-                password = await bcrypt.hash(password, 10);
+            const updateData = [this.fullName, this.role, this.active, new Date().toISOString(), this.id];
+            let sql = `UPDATE users SET full_name = ?, role = ?, active = ?, updated_at = ? WHERE id = ?`;
+            
+            if (this.password) {
+                const hashedPassword = await bcrypt.hash(this.password, 10);
+                sql = `UPDATE users SET full_name = ?, role = ?, active = ?, password = ?, updated_at = ? WHERE id = ?`;
+                updateData.splice(3, 0, hashedPassword);
             }
-
-            // Verificar que el usuario existe
-            const existingUser = await User.findById(id);
-            if (!existingUser) {
-                throw new Error('Usuario no encontrado');
-            }
-
-            // Si se cambia el username, verificar que no exista otro usuario con el mismo
-            if (username && username !== existingUser.username) {
-                const userWithSameUsername = await getOne(
-                    'SELECT id FROM users WHERE username = ? AND id != ?',
-                    [username, id]
-                );
-                if (userWithSameUsername) {
-                    throw new Error('El nombre de usuario ya existe');
-                }
-            }
-
-            // Construir query dinámicamente
-            const fields = [];
-            const values = [];
-
-            if (username) {
-                fields.push('username = ?');
-                values.push(username);
-            }
-            if (password) {
-                fields.push('password = ?');
-                values.push(password);
-            }
-            if (full_name) {
-                fields.push('full_name = ?');
-                values.push(full_name);
-            }
-            if (role) {
-                fields.push('role = ?');
-                values.push(role);
-            }
-            if (typeof active !== 'undefined') {
-                fields.push('active = ?');
-                values.push(active ? 1 : 0);
-            }
-
-            fields.push('updated_at = CURRENT_TIMESTAMP');
-            values.push(id);
-
-            await runQuery(
-                `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
-                values
-            );
-
-            return await User.findById(id);
+            
+            await database.run(sql, updateData);
+            return this;
         } catch (error) {
-            throw new Error(`Error actualizando usuario: ${error.message}`);
+            throw new Error(`Error al actualizar usuario: ${error.message}`);
         }
     }
 
     // Eliminar usuario (soft delete)
-    static async delete(id) {
+    async delete() {
         try {
-            const user = await User.findById(id);
-            if (!user) {
-                throw new Error('Usuario no encontrado');
-            }
-
-            await runQuery(
-                'UPDATE users SET active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                [id]
+            await database.run(
+                'UPDATE users SET active = 0, updated_at = ? WHERE id = ?',
+                [new Date().toISOString(), this.id]
             );
-
             return true;
         } catch (error) {
-            throw new Error(`Error eliminando usuario: ${error.message}`);
+            throw new Error(`Error al eliminar usuario: ${error.message}`);
         }
     }
 
-    // Cambiar contraseña
-    static async changePassword(id, oldPassword, newPassword) {
+    // Verificar contraseña
+    async checkPassword(password) {
+        return await bcrypt.compare(password, this.password);
+    }
+
+    // Métodos estáticos
+    static async findById(id) {
         try {
-            const user = await User.findById(id);
-            if (!user) {
-                throw new Error('Usuario no encontrado');
-            }
-
-            // Validar contraseña actual
-            const isValidPassword = await user.validatePassword(oldPassword);
-            if (!isValidPassword) {
-                throw new Error('Contraseña actual incorrecta');
-            }
-
-            // Hashear nueva contraseña
-            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-
-            await runQuery(
-                'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                [hashedNewPassword, id]
-            );
-
-            return true;
+            const row = await database.get('SELECT * FROM users WHERE id = ? AND active = 1', [id]);
+            return row ? new User(row) : null;
         } catch (error) {
-            throw new Error(`Error cambiando contraseña: ${error.message}`);
+            throw new Error(`Error al buscar usuario por ID: ${error.message}`);
         }
     }
 
-    // Método para obtener datos seguros (sin contraseña)
-    toSafeObject() {
-        return {
-            id: this.id,
-            username: this.username,
-            role: this.role,
-            full_name: this.full_name,
-            active: this.active,
-            created_at: this.created_at,
-            updated_at: this.updated_at
-        };
+    static async findByUsername(username) {
+        try {
+            const row = await database.get('SELECT * FROM users WHERE username = ? AND active = 1', [username]);
+            return row ? new User(row) : null;
+        } catch (error) {
+            throw new Error(`Error al buscar usuario por nombre: ${error.message}`);
+        }
     }
 
-    // Método para autenticar usuario
+    static async findAll() {
+        try {
+            const rows = await database.all('SELECT * FROM users WHERE active = 1 ORDER BY created_at DESC');
+            return rows.map(row => new User(row));
+        } catch (error) {
+            throw new Error(`Error al obtener usuarios: ${error.message}`);
+        }
+    }
+
     static async authenticate(username, password) {
         try {
             const user = await User.findByUsername(username);
             if (!user) {
                 return null;
             }
-
-            const isValidPassword = await user.validatePassword(password);
-            if (!isValidPassword) {
-                return null;
-            }
-
-            return user;
+            
+            const isValid = await user.checkPassword(password);
+            return isValid ? user : null;
         } catch (error) {
             throw new Error(`Error en autenticación: ${error.message}`);
         }
+    }
+
+    static async countByRole(role) {
+        try {
+            const result = await database.get(
+                'SELECT COUNT(*) as count FROM users WHERE role = ? AND active = 1',
+                [role]
+            );
+            return result.count;
+        } catch (error) {
+            throw new Error(`Error al contar usuarios por rol: ${error.message}`);
+        }
+    }
+
+    // Convertir a objeto JSON sin datos sensibles
+    toJSON() {
+        const obj = { ...this };
+        delete obj.password;
+        return obj;
     }
 }
 
