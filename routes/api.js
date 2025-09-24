@@ -104,26 +104,28 @@ router.get('/products/search', async (req, res) => {
         }
 
         const searchTerm = `%${q.trim()}%`;
-        let whereConditions = ['p.active = 1', '(p.name LIKE ? OR p.description LIKE ?)'];
+        let whereClauses = ['p.active = 1', '(p.name LIKE ? OR p.description LIKE ?)'];
         let params = [searchTerm, searchTerm];
 
         if (category_id) {
-            whereConditions.push('p.category_id = ?');
+            whereClauses.push('p.category_id = ?');
             params.push(parseInt(category_id));
         }
 
         if (available_only === 'true') {
-            whereConditions.push('p.stock_quantity > 0');
+            whereClauses.push('p.stock_quantity > 0');
         }
 
-        const products = await getAll(`
+        const query = `
             SELECT p.*, c.name as category_name
             FROM products p
             LEFT JOIN categories c ON p.category_id = c.id
-            WHERE ${whereConditions.join(' AND ')}
+            WHERE ${whereClauses.join(' AND ')}
             ORDER BY p.name
             LIMIT 20
-        `, params);
+        `;
+
+        const products = await getAll(query, params);
 
         res.json({
             success: true,
