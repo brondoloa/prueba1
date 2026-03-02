@@ -1,355 +1,220 @@
-const { runQuery, getOne, getAll } = require('../config/database');
+const database = require('../config/database');
 
 class Product {
-    constructor(data) {
+    constructor(data = {}) {
         this.id = data.id;
         this.name = data.name;
         this.description = data.description;
         this.price = data.price;
-        this.category_id = data.category_id;
-        this.category_name = data.category_name;
-        this.has_coffee = data.has_coffee;
-        this.stock_quantity = data.stock_quantity;
-        this.min_stock = data.min_stock;
-        this.active = data.active;
-        this.created_at = data.created_at;
-        this.updated_at = data.updated_at;
+        this.category = data.category;
+        this.stock = data.stock || 0;
+        this.minStock = data.minStock || 5;
+        this.active = data.active !== undefined ? data.active : true;
+        this.requiresCoffeeValidation = data.requiresCoffeeValidation || false;
+        this.image = data.image;
+        this.createdAt = data.createdAt;
+        this.updatedAt = data.updatedAt;
     }
 
-    // Crear nuevo producto
-    static async create(productData) {
+    // Crear producto
+    async create() {
         try {
-            const { 
-                name, 
-                description, 
-                price, 
-                category_id, 
-                has_coffee = false, 
-                stock_quantity = 0, 
-                min_stock = 0 
-            } = productData;
-
-            // Validar datos requeridos
-            if (!name || !price || !category_id) {
-                throw new Error('Nombre, precio y categoría son requeridos');
-            }
-
-            if (price < 0) {
-                throw new Error('El precio no puede ser negativo');
-            }
-
-            if (stock_quantity < 0 || min_stock < 0) {
-                throw new Error('Las cantidades de stock no pueden ser negativas');
-            }
-
-            // Verificar que la categoría existe
-            const categoryExists = await getOne(
-                'SELECT id FROM categories WHERE id = ? AND active = 1',
-                [category_id]
+            const currentTime = new Date().toISOString();
+            
+            const result = await database.run(
+                `INSERT INTO products (name, description, price, category, stock, min_stock, active, requires_coffee_validation, image, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    this.name,
+                    this.description,
+                    this.price,
+                    this.category,
+                    this.stock,
+                    this.minStock,
+                    this.active,
+                    this.requiresCoffeeValidation,
+                    this.image,
+                    currentTime,
+                    currentTime
+                ]
             );
-
-            if (!categoryExists) {
-                throw new Error('Categoría no válida');
-            }
-
-            const result = await runQuery(
-                `INSERT INTO products (name, description, price, category_id, has_coffee, stock_quantity, min_stock) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [name, description, price, category_id, has_coffee ? 1 : 0, stock_quantity, min_stock]
-            );
-
-            return await Product.findById(result.id);
+            
+            this.id = result.id;
+            this.createdAt = currentTime;
+            this.updatedAt = currentTime;
+            return this;
         } catch (error) {
-            throw new Error(`Error creando producto: ${error.message}`);
-        }
-    }
-
-    // Buscar producto por ID
-    static async findById(id) {
-        try {
-            const row = await getOne(
-                `SELECT p.*, c.name as category_name 
-                 FROM products p 
-                 LEFT JOIN categories c ON p.category_id = c.id 
-                 WHERE p.id = ? AND p.active = 1`, 
-                [id]
-            );
-            return row ? new Product(row) : null;
-        } catch (error) {
-            throw new Error(`Error buscando producto: ${error.message}`);
-        }
-    }
-
-    // Obtener todos los productos
-    static async findAll() {
-        try {
-            const rows = await getAll(
-                `SELECT p.*, c.name as category_name 
-                 FROM products p 
-                 LEFT JOIN categories c ON p.category_id = c.id 
-                 WHERE p.active = 1 
-                 ORDER BY c.name, p.name`
-            );
-            return rows.map(row => new Product(row));
-        } catch (error) {
-            throw new Error(`Error obteniendo productos: ${error.message}`);
-        }
-    }
-
-    // Obtener productos por categoría
-    static async findByCategory(category_id) {
-        try {
-            const rows = await getAll(
-                `SELECT p.*, c.name as category_name 
-                 FROM products p 
-                 LEFT JOIN categories c ON p.category_id = c.id 
-                 WHERE p.category_id = ? AND p.active = 1 
-                 ORDER BY p.name`,
-                [category_id]
-            );
-            return rows.map(row => new Product(row));
-        } catch (error) {
-            throw new Error(`Error obteniendo productos por categoría: ${error.message}`);
-        }
-    }
-
-    // Obtener productos con stock bajo
-    static async findLowStock() {
-        try {
-            const rows = await getAll(
-                `SELECT p.*, c.name as category_name 
-                 FROM products p 
-                 LEFT JOIN categories c ON p.category_id = c.id 
-                 WHERE p.stock_quantity <= p.min_stock AND p.active = 1 
-                 ORDER BY p.stock_quantity ASC`
-            );
-            return rows.map(row => new Product(row));
-        } catch (error) {
-            throw new Error(`Error obteniendo productos con stock bajo: ${error.message}`);
-        }
-    }
-
-    // Obtener productos con café
-    static async findWithCoffee() {
-        try {
-            const rows = await getAll(
-                `SELECT p.*, c.name as category_name 
-                 FROM products p 
-                 LEFT JOIN categories c ON p.category_id = c.id 
-                 WHERE p.has_coffee = 1 AND p.active = 1 
-                 ORDER BY c.name, p.name`
-            );
-            return rows.map(row => new Product(row));
-        } catch (error) {
-            throw new Error(`Error obteniendo productos con café: ${error.message}`);
+            throw new Error(`Error al crear producto: ${error.message}`);
         }
     }
 
     // Actualizar producto
-    static async update(id, updateData) {
+    async update() {
         try {
-            const { 
-                name, 
-                description, 
-                price, 
-                category_id, 
-                has_coffee, 
-                stock_quantity, 
-                min_stock, 
-                active 
-            } = updateData;
-
-            // Verificar que el producto existe
-            const existingProduct = await Product.findById(id);
-            if (!existingProduct) {
-                throw new Error('Producto no encontrado');
-            }
-
-            // Validar precio si se proporciona
-            if (price !== undefined && price < 0) {
-                throw new Error('El precio no puede ser negativo');
-            }
-
-            // Validar cantidades de stock si se proporcionan
-            if (stock_quantity !== undefined && stock_quantity < 0) {
-                throw new Error('La cantidad de stock no puede ser negativa');
-            }
-
-            if (min_stock !== undefined && min_stock < 0) {
-                throw new Error('El stock mínimo no puede ser negativo');
-            }
-
-            // Verificar categoría si se proporciona
-            if (category_id) {
-                const categoryExists = await getOne(
-                    'SELECT id FROM categories WHERE id = ? AND active = 1',
-                    [category_id]
-                );
-                if (!categoryExists) {
-                    throw new Error('Categoría no válida');
-                }
-            }
-
-            // Construir query dinámicamente
-            const fields = [];
-            const values = [];
-
-            if (name) {
-                fields.push('name = ?');
-                values.push(name);
-            }
-            if (description !== undefined) {
-                fields.push('description = ?');
-                values.push(description);
-            }
-            if (price !== undefined) {
-                fields.push('price = ?');
-                values.push(price);
-            }
-            if (category_id) {
-                fields.push('category_id = ?');
-                values.push(category_id);
-            }
-            if (has_coffee !== undefined) {
-                fields.push('has_coffee = ?');
-                values.push(has_coffee ? 1 : 0);
-            }
-            if (stock_quantity !== undefined) {
-                fields.push('stock_quantity = ?');
-                values.push(stock_quantity);
-            }
-            if (min_stock !== undefined) {
-                fields.push('min_stock = ?');
-                values.push(min_stock);
-            }
-            if (typeof active !== 'undefined') {
-                fields.push('active = ?');
-                values.push(active ? 1 : 0);
-            }
-
-            fields.push('updated_at = CURRENT_TIMESTAMP');
-            values.push(id);
-
-            await runQuery(
-                `UPDATE products SET ${fields.join(', ')} WHERE id = ?`,
-                values
+            const currentTime = new Date().toISOString();
+            
+            await database.run(
+                `UPDATE products SET 
+                 name = ?, description = ?, price = ?, category = ?, 
+                 stock = ?, min_stock = ?, active = ?, requires_coffee_validation = ?,
+                 image = ?, updated_at = ?
+                 WHERE id = ?`,
+                [
+                    this.name,
+                    this.description,
+                    this.price,
+                    this.category,
+                    this.stock,
+                    this.minStock,
+                    this.active,
+                    this.requiresCoffeeValidation,
+                    this.image,
+                    currentTime,
+                    this.id
+                ]
             );
-
-            return await Product.findById(id);
+            
+            this.updatedAt = currentTime;
+            return this;
         } catch (error) {
-            throw new Error(`Error actualizando producto: ${error.message}`);
+            throw new Error(`Error al actualizar producto: ${error.message}`);
         }
     }
 
     // Eliminar producto (soft delete)
-    static async delete(id) {
+    async delete() {
         try {
-            const product = await Product.findById(id);
-            if (!product) {
-                throw new Error('Producto no encontrado');
-            }
-
-            await runQuery(
-                'UPDATE products SET active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                [id]
+            await database.run(
+                'UPDATE products SET active = 0, updated_at = ? WHERE id = ?',
+                [new Date().toISOString(), this.id]
             );
-
             return true;
         } catch (error) {
-            throw new Error(`Error eliminando producto: ${error.message}`);
+            throw new Error(`Error al eliminar producto: ${error.message}`);
         }
     }
 
     // Actualizar stock
-    static async updateStock(id, newQuantity, movementType = 'adjustment', reason = '', userId = null) {
+    async updateStock(quantity, operation = 'subtract') {
         try {
-            const product = await Product.findById(id);
-            if (!product) {
-                throw new Error('Producto no encontrado');
+            let newStock;
+            if (operation === 'add') {
+                newStock = this.stock + quantity;
+            } else {
+                newStock = this.stock - quantity;
+                if (newStock < 0) {
+                    throw new Error('Stock insuficiente');
+                }
             }
 
-            if (newQuantity < 0) {
-                throw new Error('La cantidad de stock no puede ser negativa');
-            }
-
-            const previousStock = product.stock_quantity;
+            await database.run(
+                'UPDATE products SET stock = ?, updated_at = ? WHERE id = ?',
+                [newStock, new Date().toISOString(), this.id]
+            );
             
-            // Actualizar stock del producto
-            await runQuery(
-                'UPDATE products SET stock_quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                [newQuantity, id]
-            );
-
-            // Registrar movimiento de stock
-            if (userId) {
-                await runQuery(
-                    `INSERT INTO stock_movements (product_id, movement_type, quantity, previous_stock, new_stock, reason, user_id) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        id, 
-                        movementType, 
-                        Math.abs(newQuantity - previousStock), 
-                        previousStock, 
-                        newQuantity, 
-                        reason, 
-                        userId
-                    ]
-                );
-            }
-
-            return await Product.findById(id);
+            this.stock = newStock;
+            return this;
         } catch (error) {
-            throw new Error(`Error actualizando stock: ${error.message}`);
+            throw new Error(`Error al actualizar stock: ${error.message}`);
         }
     }
 
-    // Reducir stock (para ventas)
-    static async reduceStock(id, quantity, userId) {
+    // Verificar si hay stock suficiente
+    hasStock(quantity) {
+        return this.stock >= quantity;
+    }
+
+    // Verificar si está por debajo del stock mínimo
+    isLowStock() {
+        return this.stock <= this.minStock;
+    }
+
+    // Métodos estáticos
+    static async findById(id) {
         try {
-            const product = await Product.findById(id);
-            if (!product) {
-                throw new Error('Producto no encontrado');
-            }
-
-            if (quantity <= 0) {
-                throw new Error('La cantidad debe ser mayor a 0');
-            }
-
-            if (product.stock_quantity < quantity) {
-                throw new Error(`Stock insuficiente. Disponible: ${product.stock_quantity}`);
-            }
-
-            const newQuantity = product.stock_quantity - quantity;
-            return await Product.updateStock(
-                id, 
-                newQuantity, 
-                'out', 
-                `Venta - Reducción automática`, 
-                userId
-            );
+            const row = await database.get('SELECT * FROM products WHERE id = ?', [id]);
+            return row ? new Product(row) : null;
         } catch (error) {
-            throw new Error(`Error reduciendo stock: ${error.message}`);
+            throw new Error(`Error al buscar producto por ID: ${error.message}`);
         }
     }
 
-    // Verificar si el producto está disponible
-    isAvailable() {
-        return this.active && this.stock_quantity > 0;
+    static async findAll(activeOnly = true) {
+        try {
+            let sql = 'SELECT * FROM products';
+            if (activeOnly) {
+                sql += ' WHERE active = 1';
+            }
+            sql += ' ORDER BY category, name';
+            
+            const rows = await database.all(sql);
+            return rows.map(row => new Product(row));
+        } catch (error) {
+            throw new Error(`Error al obtener productos: ${error.message}`);
+        }
     }
 
-    // Verificar si el producto tiene stock bajo
-    hasLowStock() {
-        return this.stock_quantity <= this.min_stock;
+    static async findByCategory(category, activeOnly = true) {
+        try {
+            let sql = 'SELECT * FROM products WHERE category = ?';
+            let params = [category];
+            
+            if (activeOnly) {
+                sql += ' AND active = 1';
+            }
+            sql += ' ORDER BY name';
+            
+            const rows = await database.all(sql, params);
+            return rows.map(row => new Product(row));
+        } catch (error) {
+            throw new Error(`Error al buscar productos por categoría: ${error.message}`);
+        }
     }
 
-    // Obtener información de stock
-    getStockInfo() {
-        return {
-            current_stock: this.stock_quantity,
-            min_stock: this.min_stock,
-            is_low_stock: this.hasLowStock(),
-            is_available: this.isAvailable()
-        };
+    static async findLowStock() {
+        try {
+            const rows = await database.all(
+                'SELECT * FROM products WHERE stock <= min_stock AND active = 1 ORDER BY stock ASC'
+            );
+            return rows.map(row => new Product(row));
+        } catch (error) {
+            throw new Error(`Error al buscar productos con stock bajo: ${error.message}`);
+        }
+    }
+
+    static async getCategories() {
+        try {
+            const rows = await database.all(
+                'SELECT DISTINCT category FROM products WHERE active = 1 ORDER BY category'
+            );
+            return rows.map(row => row.category);
+        } catch (error) {
+            throw new Error(`Error al obtener categorías: ${error.message}`);
+        }
+    }
+
+    static async search(term, category = null) {
+        try {
+            let sql = `SELECT * FROM products WHERE active = 1 AND (name LIKE ? OR description LIKE ?)`;
+            let params = [`%${term}%`, `%${term}%`];
+            
+            if (category) {
+                sql += ' AND category = ?';
+                params.push(category);
+            }
+            
+            sql += ' ORDER BY name';
+            
+            const rows = await database.all(sql, params);
+            return rows.map(row => new Product(row));
+        } catch (error) {
+            throw new Error(`Error al buscar productos: ${error.message}`);
+        }
+    }
+
+    // Convertir a objeto JSON
+    toJSON() {
+        return { ...this };
     }
 }
 

@@ -4,174 +4,326 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Administrativo - TPV Restaurante</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --info-color: #8e44ad;
-            --sidebar-width: 280px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .sidebar {
             position: fixed;
-            top: 0;
             left: 0;
-            height: 100vh;
-            width: var(--sidebar-width);
-            background: linear-gradient(145deg, var(--primary-color), #34495e);
-            color: white;
+            top: 80px;
+            width: 250px;
+            height: calc(100vh - 80px);
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 2rem 0;
             overflow-y: auto;
-            z-index: 1000;
+        }
+
+        .nav-item {
+            padding: 12px 24px;
+            cursor: pointer;
             transition: all 0.3s ease;
-        }
-
-        .sidebar-header {
-            padding: 1.5rem;
-            text-align: center;
-            border-bottom: 1px solid #34495e;
-        }
-
-        .sidebar-header h4 {
-            margin: 0;
-            font-weight: 600;
-        }
-
-        .sidebar-nav {
-            list-style: none;
-            padding: 0;
-            margin: 1rem 0;
-        }
-
-        .sidebar-nav li {
-            margin: 0.25rem 0;
-        }
-
-        .sidebar-nav a {
+            border-left: 3px solid transparent;
             display: flex;
             align-items: center;
-            padding: 0.75rem 1.5rem;
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            transition: all 0.3s ease;
+            gap: 12px;
         }
 
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-            transform: translateX(5px);
+        .nav-item:hover {
+            background: #f8f9fa;
         }
 
-        .sidebar-nav i {
-            width: 20px;
-            margin-right: 0.75rem;
+        .nav-item.active {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            color: #2196f3;
         }
 
         .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-        }
-
-        .top-navbar {
-            background: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: between;
-            align-items: center;
-        }
-
-        .content-area {
+            margin-left: 250px;
             padding: 2rem;
+            min-height: calc(100vh - 80px);
         }
 
-        .stats-card {
+        .section {
+            display: none;
             background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
             margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            border: none;
-            transition: transform 0.3s ease;
+            color: #333;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5rem;
         }
 
-        .stats-card:hover {
-            transform: translateY(-2px);
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .form-group {
             margin-bottom: 1rem;
         }
 
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+
         .modal-content {
-            border-radius: 12px;
-            border: none;
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
         .modal-header {
-            background: linear-gradient(45deg, var(--secondary-color), var(--info-color));
-            color: white;
-            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dee2e6;
         }
 
-        .btn-custom {
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
         }
 
-        .btn-custom:hover {
-            transform: translateY(-1px);
+        .close:hover {
+            color: #000;
         }
 
-        .table-custom {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-        }
-
-        .table-custom thead {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .badge-custom {
-            font-size: 0.75rem;
-            padding: 0.35rem 0.65rem;
+        .alert {
+            padding: 12px;
+            margin-bottom: 1rem;
             border-radius: 6px;
+            font-size: 14px;
         }
 
-        .form-control, .form-select {
-            border-radius: 8px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
-        .form-control:focus, .form-select:focus {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.375rem;
+        }
+
+        .badge-success {
+            color: white;
+            background-color: #198754;
+        }
+
+        .badge-danger {
+            color: white;
+            background-color: #dc3545;
+        }
+
+        .badge-warning {
+            color: black;
+            background-color: #ffc107;
         }
 
         .loading {
@@ -180,1335 +332,382 @@
             padding: 2rem;
         }
 
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            margin-left: auto;
-        }
-
-        .user-avatar {
+        .loading::after {
+            content: '';
+            display: inline-block;
             width: 40px;
             height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
             border-radius: 50%;
-            background: var(--secondary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            margin-right: 0.5rem;
+            animation: spin 1s linear infinite;
         }
 
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-bottom: 1rem;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
         }
 
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
+                transition: transform 0.3s ease;
             }
-            
-            .sidebar.show {
+
+            .sidebar.mobile-open {
                 transform: translateX(0);
             }
-            
+
             .main-content {
                 margin-left: 0;
+                padding: 1rem;
             }
-            
-            .mobile-toggle {
-                display: block !important;
-            }
-        }
 
-        .mobile-toggle {
-            display: none;
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                margin: 2% auto;
+                width: 95%;
+                padding: 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <i class="fas fa-crown fa-2x mb-2" style="color: #f1c40f;"></i>
-            <h4>Admin Panel</h4>
-            <small class="text-muted" id="userWelcome">Bienvenido</small>
+    <div class="header">
+        <h1>👑 Panel Administrativo</h1>
+        <div class="user-info">
+            <span id="userInfo">Cargando...</span>
+            <button class="btn btn-secondary" onclick="logout()">Cerrar Sesión</button>
         </div>
-        
-        <ul class="sidebar-nav">
-            <li><a href="#" data-section="dashboard" class="nav-link active">
-                <i class="fas fa-chart-line"></i> Dashboard
-            </a></li>
-            <li><a href="#" data-section="users" class="nav-link">
-                <i class="fas fa-users"></i> Usuarios
-            </a></li>
-            <li><a href="#" data-section="products" class="nav-link">
-                <i class="fas fa-box"></i> Productos
-            </a></li>
-            <li><a href="#" data-section="categories" class="nav-link">
-                <i class="fas fa-tags"></i> Categorías
-            </a></li>
-            <li><a href="#" data-section="sales" class="nav-link">
-                <i class="fas fa-cash-register"></i> Ventas
-            </a></li>
-            <li><a href="#" data-section="vouchers" class="nav-link">
-                <i class="fas fa-ticket-alt"></i> Vales
-            </a></li>
-            <li><a href="#" data-section="reports" class="nav-link">
-                <i class="fas fa-chart-bar"></i> Reportes
-            </a></li>
-            <li><a href="#" data-section="config" class="nav-link">
-                <i class="fas fa-cog"></i> Configuración
-            </a></li>
-            <li><hr class="my-2" style="border-color: #34495e;"></li>
-            <li><a href="#" id="logoutBtn" class="nav-link">
-                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-            </a></li>
-        </ul>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
+    <div class="sidebar">
+        <div class="nav-item active" onclick="showSection('dashboard')">
+            <span>📊</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="showSection('users')">
+            <span>👥</span> Usuarios
+        </div>
+        <div class="nav-item" onclick="showSection('products')">
+            <span>🍽️</span> Productos
+        </div>
+        <div class="nav-item" onclick="showSection('sales')">
+            <span>💰</span> Ventas
+        </div>
+        <div class="nav-item" onclick="showSection('vouchers')">
+            <span>🎫</span> Vouchers
+        </div>
+        <div class="nav-item" onclick="showSection('reports')">
+            <span>📈</span> Reportes
+        </div>
+        <div class="nav-item" onclick="showSection('settings')">
+            <span>⚙️</span> Configuración
+        </div>
+    </div>
+
     <div class="main-content">
-        <!-- Top Navbar -->
-        <nav class="top-navbar">
-            <button class="btn btn-outline-primary mobile-toggle" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h5 class="mb-0" id="pageTitle">Dashboard</h5>
-            <div class="user-info">
-                <div class="user-avatar" id="userAvatar">A</div>
-                <div>
-                    <div class="fw-bold" id="userName">Admin</div>
-                    <small class="text-muted">Administrador</small>
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section active">
+            <h2>Dashboard</h2>
+            <div class="stats-grid" id="statsGrid">
+                <!-- Estadísticas se cargarán aquí -->
+            </div>
+            <div class="loading" id="dashboardLoading"></div>
+        </div>
+
+        <!-- Users Section -->
+        <div id="users" class="section">
+            <h2>Gestión de Usuarios</h2>
+            <button class="btn btn-success" onclick="openUserModal()">➕ Nuevo Usuario</button>
+            <div class="table-container">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="loading" id="usersLoading"></div>
+        </div>
+
+        <!-- Products Section -->
+        <div id="products" class="section">
+            <h2>Gestión de Productos</h2>
+            <button class="btn btn-success" onclick="openProductModal()">➕ Nuevo Producto</button>
+            <div class="table-container">
+                <table id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Estado</th>
+                            <th>Café</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="loading" id="productsLoading"></div>
+        </div>
+
+        <!-- Sales Section -->
+        <div id="sales" class="section">
+            <h2>Ventas</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fecha Inicio</label>
+                    <input type="date" id="salesStartDate">
+                </div>
+                <div class="form-group">
+                    <label>Fecha Fin</label>
+                    <input type="date" id="salesEndDate">
                 </div>
             </div>
-        </nav>
+            <button class="btn btn-primary" onclick="loadSales()">Buscar Ventas</button>
+            <div class="table-container">
+                <table id="salesTable">
+                    <thead>
+                        <tr>
+                            <th>No. Venta</th>
+                            <th>Cajero</th>
+                            <th>Total</th>
+                            <th>Método de Pago</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="loading" id="salesLoading"></div>
+        </div>
 
-        <!-- Content Area -->
-        <div class="content-area">
-            <div id="alertContainer"></div>
-            
-            <!-- Dashboard Section -->
-            <div id="dashboard" class="content-section active">
-                <div class="row mb-4">
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stat-icon" style="background: var(--success-color);">
-                                <i class="fas fa-dollar-sign"></i>
-                            </div>
-                            <h3 id="todayRevenue">$0.00</h3>
-                            <p class="text-muted mb-0">Ingresos Hoy</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stat-icon" style="background: var(--info-color);">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <h3 id="todaySales">0</h3>
-                            <p class="text-muted mb-0">Ventas Hoy</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stat-icon" style="background: var(--warning-color);">
-                                <i class="fas fa-ticket-alt"></i>
-                            </div>
-                            <h3 id="pendingVouchers">0</h3>
-                            <p class="text-muted mb-0">Vales Pendientes</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stat-icon" style="background: var(--danger-color);">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <h3 id="lowStockProducts">0</h3>
-                            <p class="text-muted mb-0">Stock Bajo</p>
-                        </div>
-                    </div>
+        <!-- Vouchers Section -->
+        <div id="vouchers" class="section">
+            <h2>Gestión de Vouchers</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingVouchers">0</div>
+                    <div class="stat-label">Pendientes</div>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="stats-card">
-                            <h5>Ventas de los Últimos 7 Días</h5>
-                            <div class="chart-container">
-                                <canvas id="salesChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stats-card">
-                            <h5>Productos Más Vendidos</h5>
-                            <div id="topProducts">
-                                <div class="loading">
-                                    <i class="fas fa-spinner fa-spin"></i> Cargando...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="coffeeVouchers">0</div>
+                    <div class="stat-label">Café Pendiente</div>
                 </div>
             </div>
+            <div class="table-container">
+                <table id="vouchersTable">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Venta</th>
+                            <th>Estado</th>
+                            <th>Requiere Café</th>
+                            <th>Validado</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="loading" id="vouchersLoading"></div>
+        </div>
 
-            <!-- Users Section -->
-            <div id="users" class="content-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4><i class="fas fa-users me-2"></i>Gestión de Usuarios</h4>
-                    <button class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#userModal">
-                        <i class="fas fa-plus me-2"></i>Nuevo Usuario
-                    </button>
+        <!-- Reports Section -->
+        <div id="reports" class="section">
+            <h2>Reportes</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fecha Inicio</label>
+                    <input type="date" id="reportStartDate">
                 </div>
-
-                <div class="stats-card">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Usuario</th>
-                                    <th>Nombre Completo</th>
-                                    <th>Rol</th>
-                                    <th>Estado</th>
-                                    <th>Fecha Creación</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTable">
-                                <tr>
-                                    <td colspan="7" class="text-center">
-                                        <div class="loading">
-                                            <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="form-group">
+                    <label>Fecha Fin</label>
+                    <input type="date" id="reportEndDate">
                 </div>
             </div>
-
-            <!-- Products Section -->
-            <div id="products" class="content-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4><i class="fas fa-box me-2"></i>Gestión de Productos</h4>
-                    <button class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#productModal">
-                        <i class="fas fa-plus me-2"></i>Nuevo Producto
-                    </button>
-                </div>
-
-                <div class="stats-card">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nombre</th>
-                                    <th>Categoría</th>
-                                    <th>Precio</th>
-                                    <th>Stock</th>
-                                    <th>¿Incluye Café?</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="productsTable">
-                                <tr>
-                                    <td colspan="8" class="text-center">
-                                        <div class="loading">
-                                            <i class="fas fa-spinner fa-spin"></i> Cargando productos...
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="form-group">
+                <button class="btn btn-primary" onclick="generateSalesReport()">📊 Reporte de Ventas</button>
+                <button class="btn btn-primary" onclick="generateInventoryReport()">📦 Reporte de Inventario</button>
+                <button class="btn btn-primary" onclick="generateVouchersReport()">🎫 Reporte de Vouchers</button>
             </div>
+            <div id="reportContainer"></div>
+            <div class="loading" id="reportsLoading"></div>
+        </div>
 
-            <!-- Categories Section -->
-            <div id="categories" class="content-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4><i class="fas fa-tags me-2"></i>Gestión de Categorías</h4>
-                    <button class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#categoryModal">
-                        <i class="fas fa-plus me-2"></i>Nueva Categoría
-                    </button>
-                </div>
-
-                <div class="stats-card">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nombre</th>
-                                    <th>Descripción</th>
-                                    <th>Estado</th>
-                                    <th>Fecha Creación</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="categoriesTable">
-                                <tr>
-                                    <td colspan="6" class="text-center">
-                                        <div class="loading">
-                                            <i class="fas fa-spinner fa-spin"></i> Cargando categorías...
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+        <!-- Settings Section -->
+        <div id="settings" class="section">
+            <h2>Configuración del Restaurante</h2>
+            <form id="settingsForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre del Restaurante</label>
+                        <input type="text" id="restaurantName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="restaurantPhone">
                     </div>
                 </div>
-            </div>
-
-            <!-- Sales Section -->
-            <div id="sales" class="content-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4><i class="fas fa-cash-register me-2"></i>Historial de Ventas</h4>
-                    <div>
-                        <input type="date" id="salesDateFilter" class="form-control d-inline-block" style="width: auto;">
-                        <button class="btn btn-outline-primary btn-custom ms-2" onclick="loadSales()">
-                            <i class="fas fa-search"></i>
-                        </button>
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <textarea id="restaurantAddress" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="restaurantEmail">
+                    </div>
+                    <div class="form-group">
+                        <label>Tasa de Impuesto (%)</label>
+                        <input type="number" id="taxRate" min="0" max="100" step="0.01">
                     </div>
                 </div>
-
-                <div class="stats-card">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Cajero</th>
-                                    <th>Total</th>
-                                    <th>Método Pago</th>
-                                    <th>Estado</th>
-                                    <th>Fecha</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="salesTable">
-                                <tr>
-                                    <td colspan="7" class="text-center">
-                                        <div class="loading">
-                                            <i class="fas fa-spinner fa-spin"></i> Cargando ventas...
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="form-group">
+                    <label>Logo del Restaurante</label>
+                    <input type="file" id="logoFile" accept="image/*">
                 </div>
-            </div>
-
-            <!-- Vouchers Section -->
-            <div id="vouchers" class="content-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4><i class="fas fa-ticket-alt me-2"></i>Gestión de Vales</h4>
-                    <div>
-                        <select id="voucherStatusFilter" class="form-select d-inline-block" style="width: auto;">
-                            <option value="">Todos los estados</option>
-                            <option value="pending">Pendientes</option>
-                            <option value="validated">Validados (Comida)</option>
-                            <option value="fully_validated">Completamente Validados</option>
-                        </select>
-                        <button class="btn btn-outline-primary btn-custom ms-2" onclick="loadVouchers()">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="stats-card">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom">
-                            <thead>
-                                <tr>
-                                    <th>Código</th>
-                                    <th>ID Venta</th>
-                                    <th>¿Incluye Café?</th>
-                                    <th>Estado</th>
-                                    <th>Expira</th>
-                                    <th>Fecha Creación</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="vouchersTable">
-                                <tr>
-                                    <td colspan="7" class="text-center">
-                                        <div class="loading">
-                                            <i class="fas fa-spinner fa-spin"></i> Cargando vales...
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reports Section -->
-            <div id="reports" class="content-section">
-                <h4 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Reportes</h4>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="stats-card">
-                            <h5>Reporte de Ventas</h5>
-                            <div class="mb-3">
-                                <label class="form-label">Fecha Inicio</label>
-                                <input type="date" id="reportStartDate" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Fecha Fin</label>
-                                <input type="date" id="reportEndDate" class="form-control">
-                            </div>
-                            <button class="btn btn-success btn-custom" onclick="generateSalesReport()">
-                                <i class="fas fa-file-excel me-2"></i>Generar Reporte
-                            </button>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="stats-card">
-                            <h5>Reporte de Vales</h5>
-                            <div class="mb-3">
-                                <label class="form-label">Estado</label>
-                                <select id="reportVoucherStatus" class="form-select">
-                                    <option value="">Todos</option>
-                                    <option value="pending">Pendientes</option>
-                                    <option value="validated">Validados</option>
-                                    <option value="fully_validated">Completados</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-info btn-custom" onclick="generateVouchersReport()">
-                                <i class="fas fa-file-pdf me-2"></i>Generar Reporte
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Configuration Section -->
-            <div id="config" class="content-section">
-                <h4 class="mb-4"><i class="fas fa-cog me-2"></i>Configuración del Sistema</h4>
-                
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="stats-card">
-                            <h5>Información del Restaurante</h5>
-                            <form id="configForm">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Nombre del Restaurante</label>
-                                        <input type="text" id="restaurantName" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Teléfono</label>
-                                        <input type="tel" id="restaurantPhone" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Dirección</label>
-                                    <textarea id="restaurantAddress" class="form-control" rows="2"></textarea>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Tasa de Impuesto (%)</label>
-                                        <input type="number" id="taxRate" class="form-control" step="0.01" min="0" max="100">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Vencimiento de Vales (horas)</label>
-                                        <input type="number" id="voucherExpiry" class="form-control" min="1" max="168">
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Pie de Recibo</label>
-                                    <textarea id="receiptFooter" class="form-control" rows="2" placeholder="Mensaje que aparecerá al final de los recibos"></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-success btn-custom">
-                                    <i class="fas fa-save me-2"></i>Guardar Configuración
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stats-card">
-                            <h5>Logo del Restaurante</h5>
-                            <div class="text-center mb-3">
-                                <img id="currentLogo" src="" alt="Logo" class="img-fluid" style="max-height: 150px; display: none;">
-                                <div id="noLogo" class="text-muted">
-                                    <i class="fas fa-image fa-3x"></i>
-                                    <p>No hay logo</p>
-                                </div>
-                            </div>
-                            <form id="logoForm" enctype="multipart/form-data">
-                                <div class="mb-3">
-                                    <input type="file" id="logoFile" class="form-control" accept="image/*">
-                                    <small class="text-muted">Formatos: JPG, PNG, GIF. Máximo 5MB</small>
-                                </div>
-                                <button type="submit" class="btn btn-primary btn-custom w-100">
-                                    <i class="fas fa-upload me-2"></i>Subir Logo
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <button type="submit" class="btn btn-success">💾 Guardar Configuración</button>
+            </form>
+            <div class="loading" id="settingsLoading"></div>
         </div>
     </div>
 
     <!-- User Modal -->
-    <div class="modal fade" id="userModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="userModalTitle">Nuevo Usuario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="userForm">
-                        <input type="hidden" id="userId">
-                        <div class="mb-3">
-                            <label class="form-label">Nombre de Usuario</label>
-                            <input type="text" id="userUsername" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Nombre Completo</label>
-                            <input type="text" id="userFullName" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Rol</label>
-                            <select id="userRole" class="form-select" required>
-                                <option value="">Seleccionar rol</option>
-                                <option value="admin">Administrador</option>
-                                <option value="cashier">Cajero</option>
-                                <option value="validator">Validador</option>
-                            </select>
-                        </div>
-                        <div class="mb-3" id="passwordGroup">
-                            <label class="form-label">Contraseña</label>
-                            <input type="password" id="userPassword" class="form-control">
-                            <small class="text-muted">Mínimo 6 caracteres. Dejar vacío para no cambiar (al editar)</small>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="saveUser()">Guardar</button>
-                </div>
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="userModalTitle">Nuevo Usuario</h3>
+                <span class="close" onclick="closeModal('userModal')">&times;</span>
             </div>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label>Nombre de Usuario</label>
+                    <input type="text" id="userUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="userFullName" required>
+                </div>
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select id="userRole" required>
+                        <option value="">Seleccione un rol</option>
+                        <option value="admin">Administrador</option>
+                        <option value="cashier">Cajero</option>
+                        <option value="validator">Validador</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="userPassword">
+                    <small>Deje vacío para mantener la contraseña actual</small>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="userActive" checked>
+                    <label for="userActive">Usuario Activo</label>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Product Modal -->
-    <div class="modal fade" id="productModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="productModalTitle">Nuevo Producto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="productForm">
-                        <input type="hidden" id="productId">
-                        <div class="row">
-                            <div class="col-md-8 mb-3">
-                                <label class="form-label">Nombre del Producto</label>
-                                <input type="text" id="productName" class="form-control" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Precio</label>
-                                <input type="number" id="productPrice" class="form-control" step="0.01" min="0" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Descripción</label>
-                            <textarea id="productDescription" class="form-control" rows="2"></textarea>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Categoría</label>
-                                <select id="productCategory" class="form-select" required>
-                                    <option value="">Seleccionar categoría</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Stock Inicial</label>
-                                <input type="number" id="productStock" class="form-control" min="0" value="0">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Stock Mínimo</label>
-                                <input type="number" id="productMinStock" class="form-control" min="0" value="0">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="productHasCoffee">
-                                <label class="form-check-label" for="productHasCoffee">
-                                    ¿Incluye café? (Requiere validación doble)
-                                </label>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="saveProduct()">Guardar</button>
-                </div>
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle">Nuevo Producto</h3>
+                <span class="close" onclick="closeModal('productModal')">&times;</span>
             </div>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <div class="form-group">
+                    <label>Nombre del Producto</label>
+                    <input type="text" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="productDescription" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Precio</label>
+                        <input type="number" id="productPrice" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <input type="text" id="productCategory" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" id="productStock" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Mínimo</label>
+                        <input type="number" id="productMinStock" min="0" required>
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="productRequiresCoffee">
+                    <label for="productRequiresCoffee">Requiere Validación de Café</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="productActive" checked>
+                    <label for="productActive">Producto Activo</label>
+                </div>
+                <div class="form-group">
+                    <label>Imagen del Producto</label>
+                    <input type="file" id="productImage" accept="image/*">
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Category Modal -->
-    <div class="modal fade" id="categoryModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="categoryModalTitle">Nueva Categoría</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="categoryForm">
-                        <input type="hidden" id="categoryId">
-                        <div class="mb-3">
-                            <label class="form-label">Nombre de la Categoría</label>
-                            <input type="text" id="categoryName" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Descripción</label>
-                            <textarea id="categoryDescription" class="form-control" rows="2"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="saveCategory()">Guardar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Variables globales
-        let token = localStorage.getItem('tpv_token');
-        let user = JSON.parse(localStorage.getItem('tpv_user') || '{}');
-        let salesChart = null;
-
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!token || user.role !== 'admin') {
-                window.location.href = '/login';
-                return;
-            }
-
-            initializeApp();
-        });
-
-        function initializeApp() {
-            // Configurar información del usuario
-            document.getElementById('userName').textContent = user.full_name || user.username;
-            document.getElementById('userWelcome').textContent = `Bienvenido, ${user.full_name || user.username}`;
-            document.getElementById('userAvatar').textContent = (user.full_name || user.username).charAt(0).toUpperCase();
-
-            // Event listeners
-            setupEventListeners();
-
-            // Cargar datos iniciales
-            loadDashboard();
-            loadConfiguration();
-        }
-
-        function setupEventListeners() {
-            // Navigation
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    if (this.id === 'logoutBtn') return;
-                    e.preventDefault();
-                    
-                    const section = this.dataset.section;
-                    showSection(section);
-                    
-                    // Update active nav
-                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-
-            // Logout
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-
-            // Mobile sidebar toggle
-            document.getElementById('sidebarToggle').addEventListener('click', function() {
-                document.getElementById('sidebar').classList.toggle('show');
-            });
-
-            // Forms
-            document.getElementById('configForm').addEventListener('submit', saveConfiguration);
-            document.getElementById('logoForm').addEventListener('submit', uploadLogo);
-        }
-
-        function showSection(sectionName) {
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-
-            // Show selected section
-            document.getElementById(sectionName).classList.add('active');
-
-            // Update page title
-            const titles = {
-                dashboard: 'Dashboard',
-                users: 'Usuarios',
-                products: 'Productos', 
-                categories: 'Categorías',
-                sales: 'Ventas',
-                vouchers: 'Vales',
-                reports: 'Reportes',
-                config: 'Configuración'
-            };
-
-            document.getElementById('pageTitle').textContent = titles[sectionName];
-
-            // Load section data
-            switch(sectionName) {
-                case 'users':
-                    loadUsers();
-                    break;
-                case 'products':
-                    loadProducts();
-                    loadCategoriesForSelect(); // Load categories for product form
-                    break;
-                case 'categories':
-                    loadCategories();
-                    break;
-                case 'sales':
-                    loadSales();
-                    break;
-                case 'vouchers':
-                    loadVouchers();
-                    break;
-            }
-        }
-
-        async function apiCall(endpoint, options = {}) {
-            const config = {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
-                ...options
-            };
-
-            try {
-                const response = await fetch(endpoint, config);
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.message || 'Error en la petición');
-                }
-
-                return data;
-            } catch (error) {
-                console.error('API Error:', error);
-                showAlert('Error: ' + error.message, 'danger');
-                throw error;
-            }
-        }
-
-        async function loadDashboard() {
-            try {
-                const data = await apiCall('/admin/dashboard');
-                
-                // Update stats
-                document.getElementById('todayRevenue').textContent = `$${data.dashboard.total_revenue_today || 0}`;
-                document.getElementById('todaySales').textContent = data.dashboard.today_sales_count || 0;
-                document.getElementById('pendingVouchers').textContent = data.dashboard.pending_vouchers_count || 0;
-                document.getElementById('lowStockProducts').textContent = data.dashboard.low_stock_products?.length || 0;
-
-                // Load top products
-                updateTopProducts(data.dashboard.sales?.top_products || []);
-
-                // Load sales chart (placeholder for now)
-                updateSalesChart();
-
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-            }
-        }
-
-        function updateTopProducts(products) {
-            const container = document.getElementById('topProducts');
-            
-            if (products.length === 0) {
-                container.innerHTML = '<p class="text-muted">No hay datos disponibles</p>';
-                return;
-            }
-
-            const html = products.map(product => `
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span>${product.name}</span>
-                    <span class="badge bg-primary">${product.total_sold}</span>
-                </div>
-            `).join('');
-
-            container.innerHTML = html;
-        }
-
-        function updateSalesChart() {
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            
-            if (salesChart) {
-                salesChart.destroy();
-            }
-
-            salesChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
-                    datasets: [{
-                        label: 'Ventas',
-                        data: [12, 19, 3, 5, 2, 3, 9], // Datos de ejemplo
-                        borderColor: 'var(--secondary-color)',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        async function loadUsers() {
-            try {
-                const data = await apiCall('/admin/users');
-                updateUsersTable(data.users);
-            } catch (error) {
-                console.error('Error loading users:', error);
-            }
-        }
-
-        function updateUsersTable(users) {
-            const tbody = document.getElementById('usersTable');
-            
-            if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No hay usuarios</td></tr>';
-                return;
-            }
-
-            const html = users.map(user => `
-                <tr>
-                    <td>${user.id}</td>
-                    <td><strong>${user.username}</strong></td>
-                    <td>${user.full_name}</td>
-                    <td><span class="badge badge-custom bg-${getRoleBadgeColor(user.role)}">${getRoleLabel(user.role)}</span></td>
-                    <td><span class="badge badge-custom bg-${user.active ? 'success' : 'secondary'}">${user.active ? 'Activo' : 'Inactivo'}</span></td>
-                    <td>${formatDate(user.created_at)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editUser(${user.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        ${user.username !== 'admin' ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>` : ''}
-                    </td>
-                </tr>
-            `).join('');
-
-            tbody.innerHTML = html;
-        }
-
-        function getRoleBadgeColor(role) {
-            const colors = {
-                admin: 'danger',
-                cashier: 'success', 
-                validator: 'primary'
-            };
-            return colors[role] || 'secondary';
-        }
-
-        function getRoleLabel(role) {
-            const labels = {
-                admin: 'Administrador',
-                cashier: 'Cajero',
-                validator: 'Validador'
-            };
-            return labels[role] || role;
-        }
-
-        function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString('es-ES');
-        }
-
-        async function saveUser() {
-            const userId = document.getElementById('userId').value;
-            const userData = {
-                username: document.getElementById('userUsername').value.trim(),
-                full_name: document.getElementById('userFullName').value.trim(),
-                role: document.getElementById('userRole').value,
-                password: document.getElementById('userPassword').value
-            };
-
-            if (!userData.username || !userData.full_name || !userData.role) {
-                showAlert('Por favor complete todos los campos requeridos', 'warning');
-                return;
-            }
-
-            if (!userId && !userData.password) {
-                showAlert('La contraseña es requerida para nuevos usuarios', 'warning');
-                return;
-            }
-
-            // Validar que no se cambie el rol del usuario admin principal
-            if (userId === '1' && userData.role !== 'admin') {
-                showAlert('No puedes cambiar el rol del administrador principal', 'warning');
-                return;
-            }
-
-            try {
-                let response;
-                if (userId) {
-                    // Edit existing user
-                    if (!userData.password) delete userData.password; // Don't send empty password
-                    response = await apiCall(`/admin/users/${userId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(userData)
-                    });
-                } else {
-                    // Create new user
-                    response = await apiCall('/admin/users', {
-                        method: 'POST',
-                        body: JSON.stringify(userData)
-                    });
-                }
-
-                showAlert(response.message, 'success');
-                bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
-                loadUsers();
-                clearUserForm();
-            } catch (error) {
-                console.error('Error saving user:', error);
-            }
-        }
-
-        function clearUserForm() {
-            document.getElementById('userForm').reset();
-            document.getElementById('userId').value = '';
-            document.getElementById('userModalTitle').textContent = 'Nuevo Usuario';
-        }
-
-        function editUser(id) {
-            // This would fetch user data and populate the form
-            // Implementation depends on your specific needs
-            document.getElementById('userModalTitle').textContent = 'Editar Usuario';
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
-        }
-
-        async function deleteUser(id) {
-            if (!confirm('¿Está seguro de que desea eliminar este usuario?')) return;
-
-            try {
-                const response = await apiCall(`/admin/users/${id}`, {
-                    method: 'DELETE'
-                });
-
-                showAlert(response.message, 'success');
-                loadUsers();
-            } catch (error) {
-                console.error('Error deleting user:', error);
-            }
-        }
-
-        function editUser(id) {
-            // Buscar el usuario en la tabla actual
-            const userRows = document.querySelectorAll('#usersTable tr');
-            let userData = null;
-            
-            userRows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length > 0 && cells[0].textContent == id) {
-                    userData = {
-                        id: id,
-                        username: cells[1].textContent,
-                        full_name: cells[2].textContent,
-                        role: cells[3].textContent.toLowerCase()
-                    };
-                }
-            });
-
-            if (userData) {
-                document.getElementById('userId').value = userData.id;
-                document.getElementById('userUsername').value = userData.username;
-                document.getElementById('userFullName').value = userData.full_name;
-                document.getElementById('userRole').value = userData.role === 'administrador' ? 'admin' : 
-                                                                userData.role === 'cajero' ? 'cashier' : 'validator';
-                document.getElementById('userModalTitle').textContent = 'Editar Usuario';
-                bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
-            }
-        }
-
-        // Similar implementations for products, categories, etc.
-        async function loadProducts() {
-            try {
-                const data = await apiCall('/admin/products');
-                updateProductsTable(data.products);
-            } catch (error) {
-                console.error('Error loading products:', error);
-            }
-        }
-
-        function updateProductsTable(products) {
-            const tbody = document.getElementById('productsTable');
-            
-            if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay productos</td></tr>';
-                return;
-            }
-
-            const html = products.map(product => `
-                <tr>
-                    <td>${product.id}</td>
-                    <td><strong>${product.name}</strong></td>
-                    <td>${product.category_name || 'Sin categoría'}</td>
-                    <td>$${product.price}</td>
-                    <td>
-                        ${product.stock_quantity}
-                        ${product.stock_quantity <= product.min_stock ? '<i class="fas fa-exclamation-triangle text-warning"></i>' : ''}
-                    </td>
-                    <td>${product.has_coffee ? '<i class="fas fa-coffee text-warning"></i>' : '-'}</td>
-                    <td><span class="badge badge-custom bg-${product.active ? 'success' : 'secondary'}">${product.active ? 'Activo' : 'Inactivo'}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${product.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-warning" onclick="updateStock(${product.id})">
-                            <i class="fas fa-boxes"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${product.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-
-            tbody.innerHTML = html;
-        }
-
-        // Configuration functions
-        async function loadConfiguration() {
-            try {
-                const data = await apiCall('/admin/config');
-                const config = data.config;
-
-                document.getElementById('restaurantName').value = config.restaurant_name || '';
-                document.getElementById('restaurantPhone').value = config.phone || '';
-                document.getElementById('restaurantAddress').value = config.address || '';
-                document.getElementById('taxRate').value = config.tax_rate || 16;
-                document.getElementById('voucherExpiry').value = config.voucher_expiry_hours || 24;
-                document.getElementById('receiptFooter').value = config.receipt_footer || '';
-
-                if (config.logo_path) {
-                    document.getElementById('currentLogo').src = config.logo_path;
-                    document.getElementById('currentLogo').style.display = 'block';
-                    document.getElementById('noLogo').style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error loading configuration:', error);
-            }
-        }
-
-        async function saveConfiguration(e) {
-            e.preventDefault();
-
-            const configData = {
-                restaurant_name: document.getElementById('restaurantName').value.trim(),
-                phone: document.getElementById('restaurantPhone').value.trim(),
-                address: document.getElementById('restaurantAddress').value.trim(),
-                tax_rate: parseFloat(document.getElementById('taxRate').value),
-                voucher_expiry_hours: parseInt(document.getElementById('voucherExpiry').value),
-                receipt_footer: document.getElementById('receiptFooter').value.trim()
-            };
-
-            try {
-                const response = await apiCall('/admin/config', {
-                    method: 'PUT',
-                    body: JSON.stringify(configData)
-                });
-
-                showAlert(response.message, 'success');
-            } catch (error) {
-                console.error('Error saving configuration:', error);
-            }
-        }
-
-        async function uploadLogo(e) {
-            e.preventDefault();
-
-            const fileInput = document.getElementById('logoFile');
-            if (!fileInput.files[0]) {
-                showAlert('Por favor seleccione un archivo', 'warning');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('logo', fileInput.files[0]);
-
-            try {
-                const response = await fetch('/admin/config/logo', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showAlert(data.message, 'success');
-                    document.getElementById('currentLogo').src = data.logo_path;
-                    document.getElementById('currentLogo').style.display = 'block';
-                    document.getElementById('noLogo').style.display = 'none';
-                    fileInput.value = '';
-                } else {
-                    showAlert(data.message, 'danger');
-                }
-            } catch (error) {
-                console.error('Error uploading logo:', error);
-                showAlert('Error subiendo el logo', 'danger');
-            }
-        }
-
-        // Placeholder functions for other sections
-        async function loadCategoriesForSelect() {
-            try {
-                const data = await apiCall('/admin/categories');
-                const select = document.getElementById('productCategory');
-                const options = data.categories.map(cat => 
-                    `<option value="${cat.id}">${cat.name}</option>`
-                ).join('');
-                select.innerHTML = '<option value="">Seleccionar categoría</option>' + options;
-            } catch (error) {
-                console.error('Error loading categories for select:', error);
-            }
-        }
-
-        async function loadCategories() {
-            try {
-                const data = await apiCall('/admin/categories');
-                updateCategoriesTable(data.categories);
-            } catch (error) {
-                console.error('Error loading categories:', error);
-            }
-        }
-
-        function updateCategoriesTable(categories) {
-            const tbody = document.getElementById('categoriesTable');
-            
-            if (categories.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay categorías</td></tr>';
-                return;
-            }
-
-            const html = categories.map(category => `
-                <tr>
-                    <td>${category.id}</td>
-                    <td><strong>${category.name}</strong></td>
-                    <td>${category.description || ''}</td>
-                    <td><span class="badge badge-custom bg-${category.active ? 'success' : 'secondary'}">${category.active ? 'Activa' : 'Inactiva'}</span></td>
-                    <td>${formatDate(category.created_at)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editCategory(${category.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${category.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-
-            tbody.innerHTML = html;
-        }
-
-        async function loadSales() {
-            try {
-                const data = await apiCall('/admin/reports/sales?limit=50');
-                updateSalesTable(data.sales);
-            } catch (error) {
-                console.error('Error loading sales:', error);
-            }
-        }
-
-        function updateSalesTable(sales) {
-            const tbody = document.getElementById('salesTable');
-            
-            if (sales.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No hay ventas</td></tr>';
-                return;
-            }
-
-            const html = sales.map(sale => `
-                <tr>
-                    <td><strong>#${sale.id}</strong></td>
-                    <td>${sale.cashier_name || 'N/A'}</td>
-                    <td>${sale.total_amount}</td>
-                    <td><span class="badge bg-info">${getPaymentMethodLabel(sale.payment_method)}</span></td>
-                    <td><span class="badge badge-custom bg-${getStatusBadgeColor(sale.status)}">${getStatusLabel(sale.status)}</span></td>
-                    <td>${formatDateTime(sale.created_at)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewSaleDetails(${sale.id})" title="Ver detalles">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-
-            tbody.innerHTML = html;
-        }
-
-        async function loadVouchers() {
-            try {
-                const data = await apiCall('/admin/reports/vouchers?limit=50');
-                updateVouchersTable(data.vouchers);
-            } catch (error) {
-                console.error('Error loading vouchers:', error);
-            }
-        }
-
-        function updateVouchersTable(vouchers) {
-            const tbody = document.getElementById('vouchersTable');
-            
-            if (vouchers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No hay vales</td></tr>';
-                return;
-            }
-
-            const html = vouchers.map(voucher => `
-                <tr>
-                    <td><strong>${voucher.code}</strong></td>
-                    <td>#${voucher.sale_id}</td>
-                    <td>${voucher.has_coffee ? '<i class="fas fa-coffee text-warning"></i>' : '-'}</td>
-                    <td><span class="badge badge-custom bg-${getVoucherStatusColor(voucher.status)}">${getVoucherStatusLabel(voucher.status)}</span></td>
-                    <td>${formatDateTime(voucher.expires_at)}</td>
-                    <td>${formatDateTime(voucher.created_at)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-info" onclick="viewVoucherDetails('${voucher.code}')" title="Ver detalles">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-
-            tbody.innerHTML = html;
-        }
-
-        function getPaymentMethodLabel(method) {
-            const labels = {
-                cash: 'Efectivo',
-                card: 'Tarjeta', 
-                transfer: 'Transferencia'
-            };
-            return labels[method] || method;
-        }
-
-        function getVoucherStatusColor(status) {
-            const colors = {
-                pending: 'warning',
-                validated: 'info',
-                fully_validated: 'success'
-            };
-            return colors[status] || 'secondary';
-        }
-
-        function getVoucherStatusLabel(status) {
-            const labels = {
-                pending: 'Pendiente',
-                validated: 'Validado (Comida)', 
-                fully_validated: 'Completado'
-            };
-            return labels[status] || status;
-        }
-
-        function formatDateTime(dateString) {
-            return new Date(dateString).toLocaleString('es-ES');
-        }
-
-        // Placeholder functions for future implementation
-        function editCategory(id) { showAlert('Funcionalidad en desarrollo', 'info'); }
-        function deleteCategory(id) { showAlert('Funcionalidad en desarrollo', 'info'); }
-        function editProduct(id) { showAlert('Funcionalidad en desarrollo', 'info'); }
-        function deleteProduct(id) { showAlert('Funcionalidad en desarrollo', 'info'); }
-        function updateStock(id) { showAlert('Funcionalidad en desarrollo', 'info'); }
-        function viewSaleDetails(id) { showAlert('Funcionalidad en desarrollo', 'info'); }
-        function viewVoucherDetails(code) { showAlert('Funcionalidad en desarrollo', 'info'); }
-        function generateSalesReport() { showAlert('Funcionalidad en desarrollo', 'info'); }
-        function generateVouchersReport() { showAlert('Funcionalidad en desarrollo', 'info'); }
-
-        async function saveProduct() { 
-            showAlert('Funcionalidad en desarrollo', 'info'); 
-        }
-        
-        async function saveCategory() { 
-            showAlert('Funcionalidad en desarrollo', 'info'); 
-        }
-
-        function showAlert(message, type) {
-            const alertHtml = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    <i class="fas ${getAlertIcon(type)} me-2"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            document.getElementById('alertContainer').innerHTML = alertHtml;
-
-            setTimeout(() => {
-                const alert = document.querySelector('#alertContainer .alert');
-                if (alert) alert.remove();
-            }, 5000);
-        }
-
-        function getAlertIcon(type) {
-            const icons = {
-                success: 'fa-check-circle',
-                danger: 'fa-exclamation-triangle',
-                warning: 'fa-exclamation-circle',
-                info: 'fa-info-circle'
-            };
-            return icons[type] || 'fa-info-circle';
-        }
-
-        function logout() {
-            localStorage.removeItem('tpv_token');
-            localStorage.removeItem('tpv_user');
-            window.location.href = '/login';
-        }
-    </script>
+    <script src="/js/admin.js"></script>
 </body>
 </html>

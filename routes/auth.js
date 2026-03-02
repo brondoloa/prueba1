@@ -1,279 +1,204 @@
 const express = require('express');
-const rateLimit = require('express-rate-limit');
-const User = require('../models/User');
-const AuthMiddleware = require('../middleware/auth');
-
 const router = express.Router();
+const User = require('../models/User');
+const { generateToken, authenticate } = require('../middleware/auth');
 
-// Rate limiting específico para autenticación
-const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 5, // máximo 5 intentos por IP
-    message: {
-        success: false,
-        message: 'Demasiados intentos de login. Intente nuevamente en 15 minutos.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-// LOGIN
-router.post('/login', loginLimiter, async (req, res) => {
+// Login
+router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-
-        // Validar datos de entrada
+        
         if (!username || !password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Usuario y contraseña son requeridos'
+            return res.status(400).json({ 
+                error: 'Usuario y contraseña son requeridos' 
             });
         }
-
-        // Validar longitud
-        if (username.length > 50 || password.length > 100) {
-            return res.status(400).json({
-                success: false,
-                message: 'Datos de entrada no válidos'
-            });
-        }
-
-        // Autenticar usuario
-        const user = await User.authenticate(username.trim(), password);
+        
+        const user = await User.authenticate(username, password);
         
         if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: 'Credenciales incorrectas'
+            return res.status(401).json({ 
+                error: 'Credenciales inválidas' 
             });
         }
-
-        // Generar token JWT
-        const token = AuthMiddleware.generateToken(user);
-
-        // Respuesta exitosa
+        
+        const token = generateToken(user.id, user.role);
+        
+        // Establecer cookie segura
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 8 * 60 * 60 * 1000 // 8 horas
+        });
+        
         res.json({
             success: true,
             message: 'Login exitoso',
-            token: token,
-            user: user.toSafeObject(),
-            expires_in: '24h'
+            user: user.toJSON(),
+            token,
+            redirectUrl: getRedirectUrl(user.role)
         });
-
-        // Log de acceso (opcional)
-        console.log(`🔐 Login exitoso: ${user.username} (${user.role}) - ${new Date().toISOString()}`);
-
+        
     } catch (error) {
         console.error('Error en login:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error interno del servidor'
+        res.status(500).json({ 
+            error: 'Error interno del servidor' 
         });
     }
 });
 
-// LOGOUT (opcional - el cliente simplemente elimina el token)
-router.post('/logout', AuthMiddleware.verifyToken, (req, res) => {
+// Logout
+router.post('/logout', (req, res) => {
     try {
-        // En este caso, no necesitamos hacer nada en el servidor
-        // El cliente debe eliminar el token del localStorage/sessionStorage
-        
-        console.log(`🔓 Logout: ${req.user.username} - ${new Date().toISOString()}`);
-        
+        res.clearCookie('token');
         res.json({
             success: true,
             message: 'Logout exitoso'
         });
     } catch (error) {
         console.error('Error en logout:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error interno del servidor'
+        res.status(500).json({ 
+            error: 'Error interno del servidor' 
         });
     }
 });
 
-// VERIFICAR TOKEN
-router.get('/verify', AuthMiddleware.verifyToken, (req, res) => {
-    try {
-        res.json({
-            success: true,
-            message: 'Token válido',
-            user: req.user
-        });
-    } catch (error) {
-        console.error('Error verificando token:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error interno del servidor'
-        });
-    }
-});
-
-// RENOVAR TOKEN
-router.post('/refresh', AuthMiddleware.renewToken);
-
-// CAMBIAR CONTRASEÑA
-router.post('/change-password', AuthMiddleware.verifyToken, async (req, res) => {
-    try {
-        const { current_password, new_password, confirm_password } = req.body;
-        const userId = req.user.id;
-
-        // Validar datos de entrada
-        if (!current_password || !new_password || !confirm_password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Todos los campos son requeridos'
-            });
-        }
-
-        // Validar que las contraseñas coincidan
-        if (new_password !== confirm_password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Las contraseñas nuevas no coinciden'
-            });
-        }
-
-        // Validar longitud de la nueva contraseña
-        if (new_password.length < 6) {
-            return res.status(400).json({
-                success: false,
-                message: 'La contraseña debe tener al menos 6 caracteres'
-            });
-        }
-
-        if (new_password.length > 100) {
-            return res.status(400).json({
-                success: false,
-                message: 'La contraseña es demasiado larga'
-            });
-        }
-
-        // Cambiar contraseña
-        await User.changePassword(userId, current_password, new_password);
-
-        res.json({
-            success: true,
-            message: 'Contraseña cambiada exitosamente'
-        });
-
-        console.log(`🔑 Cambio de contraseña: ${req.user.username} - ${new Date().toISOString()}`);
-
-    } catch (error) {
-        console.error('Error cambiando contraseña:', error);
-        
-        let message = 'Error interno del servidor';
-        if (error.message.includes('Contraseña actual incorrecta')) {
-            message = 'La contraseña actual es incorrecta';
-        }
-
-        res.status(400).json({
-            success: false,
-            message: message
-        });
-    }
-});
-
-// INFORMACIÓN DEL USUARIO ACTUAL
-router.get('/me', AuthMiddleware.verifyToken, async (req, res) => {
+// Verificar token y obtener usuario actual
+router.get('/me', authenticate, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'Usuario no encontrado'
+            return res.status(404).json({ 
+                error: 'Usuario no encontrado' 
             });
         }
-
-        res.json({
-            success: true,
-            user: user.toSafeObject()
-        });
-    } catch (error) {
-        console.error('Error obteniendo información del usuario:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error interno del servidor'
-        });
-    }
-});
-
-// VALIDAR CREDENCIALES (para operaciones sensibles)
-router.post('/validate-credentials', AuthMiddleware.verifyToken, async (req, res) => {
-    try {
-        const { password } = req.body;
-        const userId = req.user.id;
-
-        if (!password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Contraseña requerida'
-            });
-        }
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'Usuario no encontrado'
-            });
-        }
-
-        const isValidPassword = await user.validatePassword(password);
         
-        if (!isValidPassword) {
-            return res.status(401).json({
-                success: false,
-                message: 'Contraseña incorrecta'
+        res.json({
+            success: true,
+            user: user.toJSON()
+        });
+        
+    } catch (error) {
+        console.error('Error obteniendo usuario:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor' 
+        });
+    }
+});
+
+// Cambiar contraseña
+router.post('/change-password', authenticate, async (req, res) => {
+    try {
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+        
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({ 
+                error: 'Todos los campos son requeridos' 
             });
         }
-
+        
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ 
+                error: 'Las contraseñas no coinciden' 
+            });
+        }
+        
+        if (newPassword.length < 6) {
+            return res.status(400).json({ 
+                error: 'La contraseña debe tener al menos 6 caracteres' 
+            });
+        }
+        
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ 
+                error: 'Usuario no encontrado' 
+            });
+        }
+        
+        // Verificar contraseña actual
+        const isCurrentPasswordValid = await user.checkPassword(currentPassword);
+        if (!isCurrentPasswordValid) {
+            return res.status(400).json({ 
+                error: 'Contraseña actual incorrecta' 
+            });
+        }
+        
+        // Actualizar contraseña
+        user.password = newPassword;
+        await user.update();
+        
         res.json({
             success: true,
-            message: 'Credenciales válidas'
+            message: 'Contraseña actualizada exitosamente'
         });
-
+        
     } catch (error) {
-        console.error('Error validando credenciales:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error interno del servidor'
+        console.error('Error cambiando contraseña:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor' 
         });
     }
 });
 
-// OBTENER ROLES DISPONIBLES
-router.get('/roles', (req, res) => {
-    try {
-        const roles = [
-            { value: 'admin', label: 'Administrador', description: 'Acceso completo al sistema' },
-            { value: 'cashier', label: 'Cajero', description: 'Gestión de ventas y caja' },
-            { value: 'validator', label: 'Validador', description: 'Validación de vales únicamente' }
-        ];
-
-        res.json({
-            success: true,
-            roles: roles
-        });
-    } catch (error) {
-        console.error('Error obteniendo roles:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error interno del servidor'
-        });
-    }
-});
-
-// MIDDLEWARE DE ERROR ESPECÍFICO PARA RUTAS DE AUTH
-router.use((error, req, res, next) => {
-    console.error('Error en rutas de autenticación:', error);
+// Verificar estado de autenticación
+router.get('/check', (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
     
-    res.status(500).json({
-        success: false,
-        message: 'Error en el sistema de autenticación'
-    });
+    if (!token) {
+        return res.json({
+            authenticated: false,
+            user: null
+        });
+    }
+    
+    try {
+        const jwt = require('jsonwebtoken');
+        const { JWT_SECRET } = require('../middleware/auth');
+        const decoded = jwt.verify(token, JWT_SECRET);
+        
+        User.findById(decoded.userId)
+            .then(user => {
+                if (user && user.active) {
+                    res.json({
+                        authenticated: true,
+                        user: user.toJSON(),
+                        redirectUrl: getRedirectUrl(user.role)
+                    });
+                } else {
+                    res.json({
+                        authenticated: false,
+                        user: null
+                    });
+                }
+            })
+            .catch(error => {
+                res.json({
+                    authenticated: false,
+                    user: null
+                });
+            });
+    } catch (error) {
+        res.json({
+            authenticated: false,
+            user: null
+        });
+    }
 });
+
+// Función auxiliar para determinar URL de redirección según rol
+function getRedirectUrl(role) {
+    switch (role) {
+        case 'admin':
+            return '/admin.html';
+        case 'cashier':
+            return '/cashier.html';
+        case 'validator':
+            return '/validator.html';
+        default:
+            return '/login.html';
+    }
+}
 
 module.exports = router;

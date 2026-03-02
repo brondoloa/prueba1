@@ -3,373 +3,416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>la pica de juanito</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>TPV Restaurante - Login</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
         }
         
-        .login-card {
+        .login-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             width: 100%;
             max-width: 400px;
+            animation: slideUp 0.5s ease-out;
         }
         
-        .login-header {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            padding: 2rem;
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .logo p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .role-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .role-option {
+            position: relative;
+        }
+        
+        .role-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        .role-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
             text-align: center;
         }
         
-        .login-header h2 {
-            margin: 0;
-            font-weight: 600;
-        }
-        
-        .login-header p {
-            margin: 0.5rem 0 0 0;
-            opacity: 0.9;
-        }
-        
-        .login-body {
-            padding: 2rem;
-        }
-        
-        .form-floating {
-            margin-bottom: 1rem;
-        }
-        
-        .form-control {
-            border-radius: 10px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus {
+        .role-option input[type="radio"]:checked + label {
             border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
         }
         
-        .btn-login {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+        .role-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .role-text {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
             border-radius: 10px;
-            padding: 12px;
+            color: white;
+            font-size: 16px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            cursor: pointer;
             transition: all 0.3s ease;
+            margin-bottom: 20px;
         }
         
-        .btn-login:hover {
+        .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .alert {
-            border-radius: 10px;
-            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .alert.error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+        
+        .alert.success {
+            background: #efe;
+            color: #363;
+            border: 1px solid #cfc;
         }
         
         .loading {
             display: none;
+            text-align: center;
+            margin-top: 10px;
         }
         
-        .role-badge {
+        .loading::after {
+            content: '';
             display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin: 0.25rem;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
         }
         
-        .role-admin {
-            background-color: #dc3545;
-            color: white;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
-        .role-cashier {
-            background-color: #28a745;
-            color: white;
-        }
-        
-        .role-validator {
-            background-color: #007bff;
-            color: white;
-        }
-        
-        .demo-users {
+        .demo-credentials {
             background: #f8f9fa;
             border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1rem;
-            font-size: 0.85rem;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
         }
         
-        .demo-users h6 {
-            color: #495057;
-            margin-bottom: 0.5rem;
+        .demo-credentials h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .demo-credentials div {
+            margin-bottom: 5px;
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            .role-selector {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-4">
-                <div class="login-card">
-                    <div class="login-header">
-                        <i class="fas fa-cash-register fa-2x mb-3"></i>
-                        <h2>TPV Restaurante</h2>
-                        <p>Sistema de Punto de Venta</p>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🍽️ TPV Restaurante</h1>
+            <p>Sistema de Punto de Venta</p>
+        </div>
+        
+        <form id="loginForm">
+            <div class="alert" id="alert"></div>
+            
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            
+            <div class="form-group">
+                <label>Tipo de Usuario</label>
+                <div class="role-selector">
+                    <div class="role-option">
+                        <input type="radio" id="admin" name="expectedRole" value="admin">
+                        <label for="admin">
+                            <div class="role-icon">👑</div>
+                            <div class="role-text">Administrador</div>
+                        </label>
                     </div>
-                    
-                    <div class="login-body">
-                        <form id="loginForm">
-                            <div id="alertContainer"></div>
-                            
-                            <div class="form-floating">
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="username" 
-                                       name="username" 
-                                       placeholder="Usuario"
-                                       required
-                                       autocomplete="username">
-                                <label for="username">
-                                    <i class="fas fa-user me-2"></i>Usuario
-                                </label>
-                            </div>
-                            
-                            <div class="form-floating">
-                                <input type="password" 
-                                       class="form-control" 
-                                       id="password" 
-                                       name="password" 
-                                       placeholder="Contraseña"
-                                       required
-                                       autocomplete="current-password">
-                                <label for="password">
-                                    <i class="fas fa-lock me-2"></i>Contraseña
-                                </label>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary btn-login w-100">
-                                <span class="login-text">
-                                    <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
-                                </span>
-                                <span class="loading">
-                                    <i class="fas fa-spinner fa-spin me-2"></i>Iniciando...
-                                </span>
-                            </button>
-                        </form>
-                        
-                        <!-- Usuarios de demostración -->
-                        <div class="demo-users">
-                            <h6><i class="fas fa-users me-2"></i>Usuarios de Prueba:</h6>
-                            <div>
-                                <strong>admin</strong> / admin123 
-                                <span class="role-badge role-admin">ADMIN</span>
-                            </div>
-                            <div>
-                                <strong>cajero</strong> / cajero123 
-                                <span class="role-badge role-cashier">CAJERO</span>
-                            </div>
-                            <div>
-                                <strong>validador</strong> / validador123 
-                                <span class="role-badge role-validator">VALIDADOR</span>
-                            </div>
-                        </div>
+                    <div class="role-option">
+                        <input type="radio" id="cashier" name="expectedRole" value="cashier" checked>
+                        <label for="cashier">
+                            <div class="role-icon">💰</div>
+                            <div class="role-text">Cajero</div>
+                        </label>
+                    </div>
+                    <div class="role-option">
+                        <input type="radio" id="validator" name="expectedRole" value="validator">
+                        <label for="validator">
+                            <div class="role-icon">✅</div>
+                            <div class="role-text">Validador</div>
+                        </label>
                     </div>
                 </div>
             </div>
+            
+            <button type="submit" class="btn" id="loginBtn">Iniciar Sesión</button>
+            
+            <div class="loading" id="loading"></div>
+        </form>
+        
+        <div class="demo-credentials">
+            <h4>Usuarios de prueba:</h4>
+            <div><strong>Admin:</strong> admin / admin123</div>
+            <div><strong>Cajero:</strong> cajero / cajero123</div>
+            <div><strong>Validador:</strong> validador / validador123</div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginForm = document.getElementById('loginForm');
-            const alertContainer = document.getElementById('alertContainer');
-            const loginText = document.querySelector('.login-text');
-            const loading = document.querySelector('.loading');
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const loading = document.getElementById('loading');
+        const alert = document.getElementById('alert');
 
-            // Verificar si hay errores en la URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const error = urlParams.get('error');
-            
-            if (error) {
-                let message = 'Error desconocido';
-                switch(error) {
-                    case 'access_required':
-                        message = 'Debe iniciar sesión para acceder';
-                        break;
-                    case 'token_expired':
-                        message = 'Su sesión ha expirado. Inicie sesión nuevamente';
-                        break;
-                    case 'invalid_token':
-                        message = 'Token de acceso inválido';
-                        break;
-                    case 'invalid_user':
-                        message = 'Usuario no válido';
-                        break;
-                    case 'insufficient_permissions':
-                        message = 'Permisos insuficientes';
-                        break;
-                    case 'server_error':
-                        message = 'Error del servidor. Intente nuevamente';
-                        break;
-                }
-                showAlert(message, 'danger');
-                
-                // Limpiar la URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
+        // Verificar si ya está autenticado
+        window.addEventListener('load', () => {
+            checkAuthStatus();
+        });
 
-            loginForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const username = document.getElementById('username').value.trim();
-                const password = document.getElementById('password').value;
-                
-                if (!username || !password) {
-                    showAlert('Por favor complete todos los campos', 'warning');
-                    return;
-                }
-
-                // Mostrar loading
-                loginText.style.display = 'none';
-                loading.style.display = 'inline';
-                
-                try {
-                    const response = await fetch('/auth/login', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ username, password })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        // Guardar token
-                        localStorage.setItem('tpv_token', data.token);
-                        localStorage.setItem('tpv_user', JSON.stringify(data.user));
-                        
-                        showAlert('Inicio de sesión exitoso. Redirigiendo...', 'success');
-                        
-                        // Redirigir según el rol
-                        setTimeout(() => {
-                            switch(data.user.role) {
-                                case 'admin':
-                                    window.location.href = '/admin-panel';
-                                    break;
-                                case 'cashier':
-                                    window.location.href = '/cashier-panel';
-                                    break;
-                                case 'validator':
-                                    window.location.href = '/validator-panel';
-                                    break;
-                                default:
-                                    window.location.href = '/';
-                            }
-                        }, 1500);
-                    } else {
-                        showAlert(data.message || 'Error en el inicio de sesión', 'danger');
+        function checkAuthStatus() {
+            fetch('/api/auth/check')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.authenticated && data.redirectUrl) {
+                        window.location.href = data.redirectUrl;
                     }
-                } catch (error) {
-                    console.error('Error:', error);
-                    showAlert('Error de conexión. Verifique su internet', 'danger');
-                }
-                
-                // Ocultar loading
-                loginText.style.display = 'inline';
-                loading.style.display = 'none';
-            });
+                })
+                .catch(error => {
+                    console.log('No authenticated or error checking auth');
+                });
+        }
 
-            function showAlert(message, type) {
-                const alertHtml = `
-                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                        <i class="fas ${getAlertIcon(type)} me-2"></i>
-                        ${message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `;
-                alertContainer.innerHTML = alertHtml;
-                
-                // Auto-dismiss después de 5 segundos
-                setTimeout(() => {
-                    const alert = alertContainer.querySelector('.alert');
-                    if (alert) {
-                        alert.remove();
-                    }
-                }, 5000);
-            }
-
-            function getAlertIcon(type) {
-                switch(type) {
-                    case 'success': return 'fa-check-circle';
-                    case 'danger': return 'fa-exclamation-triangle';
-                    case 'warning': return 'fa-exclamation-circle';
-                    case 'info': return 'fa-info-circle';
-                    default: return 'fa-info-circle';
-                }
-            }
-
-            // Auto-focus en el campo de usuario
-            document.getElementById('username').focus();
-
-            // Verificar si ya está logueado
-            const token = localStorage.getItem('tpv_token');
-            const user = localStorage.getItem('tpv_user');
+        function showAlert(message, type = 'error') {
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+            alert.style.display = 'block';
             
-            if (token && user) {
-                try {
-                    const userData = JSON.parse(user);
-                    // Verificar token con el servidor
-                    fetch('/auth/verify', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    }).then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Usuario ya está logueado, redirigir
-                            switch(userData.role) {
-                                case 'admin':
-                                    window.location.href = '/admin-panel';
-                                    break;
-                                case 'cashier':
-                                    window.location.href = '/cashier-panel';
-                                    break;
-                                case 'validator':
-                                    window.location.href = '/validator-panel';
-                                    break;
-                            }
-                        }
-                    }).catch(() => {
-                        // Token inválido, limpiar storage
-                        localStorage.removeItem('tpv_token');
-                        localStorage.removeItem('tpv_user');
-                    });
-                } catch (e) {
-                    // Error parsing user data, limpiar storage
-                    localStorage.removeItem('tpv_token');
-                    localStorage.removeItem('tpv_user');
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        function setLoading(isLoading) {
+            loginBtn.disabled = isLoading;
+            loading.style.display = isLoading ? 'block' : 'none';
+            loginBtn.textContent = isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión';
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(loginForm);
+            const username = formData.get('username').trim();
+            const password = formData.get('password');
+            const expectedRole = formData.get('expectedRole');
+            
+            if (!username || !password) {
+                showAlert('Por favor, complete todos los campos');
+                return;
+            }
+            
+            setLoading(true);
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Verificar si el rol coincide con el esperado
+                    if (expectedRole && data.user.role !== expectedRole) {
+                        showAlert(`Este usuario no tiene permisos de ${expectedRole}. Su rol es: ${data.user.role}`);
+                        setLoading(false);
+                        return;
+                    }
+                    
+                    showAlert('¡Inicio de sesión exitoso! Redirigiendo...', 'success');
+                    
+                    // Redirigir después de un breve delay
+                    setTimeout(() => {
+                        window.location.href = data.redirectUrl;
+                    }, 1000);
+                    
+                } else {
+                    showAlert(data.error || 'Error de autenticación');
+                    setLoading(false);
                 }
+                
+            } catch (error) {
+                console.error('Error de login:', error);
+                showAlert('Error de conexión. Intente nuevamente.');
+                setLoading(false);
+            }
+        });
+
+        // Funcionalidad para probar credenciales rápidamente
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.demo-credentials div')) {
+                const text = e.target.textContent;
+                const match = text.match(/(\w+) \/ (\w+)/);
+                if (match) {
+                    document.getElementById('username').value = match[1];
+                    document.getElementById('password').value = match[2];
+                    
+                    // Seleccionar el rol apropiado
+                    const role = match[1] === 'admin' ? 'admin' : 
+                                match[1] === 'cajero' ? 'cashier' : 'validator';
+                    document.getElementById(role).checked = true;
+                }
+            }
+        });
+
+        // Enter en los campos de texto
+        document.getElementById('username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('password').focus();
+            }
+        });
+
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loginForm.dispatchEvent(new Event('submit'));
             }
         });
     </script>

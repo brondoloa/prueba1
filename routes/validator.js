@@ -1,474 +1,337 @@
 const express = require('express');
-const Voucher = require('../models/Voucher');
-const { getOne, getAll } = require('../config/database');
-
 const router = express.Router();
+const Voucher = require('../models/Voucher');
+const Sale = require('../models/Sale');
+const { isValidator } = require('../middleware/auth');
 
-// VALIDACIÓN DE VALES
+// Middleware para verificar que el usuario es validador o admin
+router.use(isValidator);
 
-// Buscar vale por código
-router.get('/vouchers/:code', async (req, res) => {
+// =============== VALIDACIÓN DE VOUCHERS ===============
+
+// Validar voucher por código (validación principal)
+router.post('/validate', async (req, res) => {
     try {
-        const code = req.params.code.toUpperCase().trim();
+        const { code } = req.body;
         
-        if (!code) {
-            return res.status(400).json({
-                success: false,
-                message: 'Código de vale requerido'
+        if (!code || typeof code !== 'string') {
+            return res.status(400).json({ 
+                error: 'Código de voucher requerido' 
             });
         }
-
-        const voucher = await Voucher.findByCode(code);
+        
+        const voucher = await Voucher.findByCode(code.toUpperCase());
         
         if (!voucher) {
-            return res.status(404).json({
-                success: false,
-                message: 'Vale no encontrado'
+            return res.status(404).json({ 
+                error: 'Voucher no encontrado',
+                status: 'not_found'
             });
         }
-
-        // Incluir información completa del estado del vale
-        const statusInfo = voucher.getStatusInfo();
+        
+        if (voucher.isExpired()) {
+            return res.status(400).json({ 
+                error: 'El voucher ha expirado',
+                status: 'expired',
+                voucher: voucher.toJSON()
+            });
+        }
+        
+        if (voucher.isValidated) {
+            return res.status(400).json({ 
+                error: 'El voucher ya ha sido validado',
+                status: 'already_validated',
+                voucher: voucher.toJSON()
+            });
+        }
+        
+        // Validar el voucher
+        await voucher.validate(req.user.id);
         
         res.json({
             success: true,
-            voucher: {
-                ...voucher,
-                status_info: statusInfo
-            }
+            message: 'Voucher validado exitosamente',
+            status: 'validated',
+            voucher: voucher.toJSON(),
+            requiresCoffeeValidation: voucher.requiresCoffeeValidation
         });
+        
     } catch (error) {
-        console.error('Error buscando vale:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
+        console.error('Error validando voucher:', error);
+        res.status(500).json({ 
+            error: error.message || 'Error interno del servidor',
+            status: 'error'
         });
     }
 });
 
-// Validar comida (primera validación)
-router.post('/vouchers/:code/validate-food', async (req, res) => {
+// Validar café específicamente
+router.post('/validate-coffee', async (req, res) => {
     try {
-        const code = req.params.code.toUpperCase().trim();
-        const validatorId = req.user.id;
-
-        if (!code) {
-            return res.status(400).json({
-                success: false,
-                message: 'Código de vale requerido'
-            });
-        }
-
-        const voucher = await Voucher.validateFood(code, validatorId);
-
-        res.json({
-            success: true,
-            message: 'Comida validada exitosamente',
-            voucher: {
-                ...voucher,
-                status_info: voucher.getStatusInfo()
-            }
-        });
-
-        console.log(`🍽️ Comida validada - Vale: ${code}, Validador: ${req.user.full_name} - ${new Date().toISOString()}`);
-
-    } catch (error) {
-        console.error('Error validando comida:', error);
+        const { code } = req.body;
         
-        let statusCode = 400;
-        if (error.message.includes('no encontrado')) {
-            statusCode = 404;
-        } else if (error.message.includes('expirado')) {
-            statusCode = 410; // Gone
-        }
-
-        res.status(statusCode).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Validar café (segunda validación)
-router.post('/vouchers/:code/validate-coffee', async (req, res) => {
-    try {
-        const code = req.params.code.toUpperCase().trim();
-        const validatorId = req.user.id;
-
-        if (!code) {
-            return res.status(400).json({
-                success: false,
-                message: 'Código de vale requerido'
+        if (!code || typeof code !== 'string') {
+            return res.status(400).json({ 
+                error: 'Código de voucher requerido' 
             });
         }
-
-        const voucher = await Voucher.validateCoffee(code, validatorId);
-
+        
+        const voucher = await Voucher.findByCode(code.toUpperCase());
+        
+        if (!voucher) {
+            return res.status(404).json({ 
+                error: 'Voucher no encontrado',
+                status: 'not_found'
+            });
+        }
+        
+        if (voucher.isExpired()) {
+            return res.status(400).json({ 
+                error: 'El voucher ha expirado',
+                status: 'expired',
+                voucher: voucher.toJSON()
+            });
+        }
+        
+        if (!voucher.requiresCoffeeValidation) {
+            return res.status(400).json({ 
+                error: 'Este voucher no requiere validación de café',
+                status: 'no_coffee_required',
+                voucher: voucher.toJSON()
+            });
+        }
+        
+        if (!voucher.isValidated) {
+            return res.status(400).json({ 
+                error: 'El voucher debe ser validado primero en el área de comida',
+                status: 'not_validated',
+                voucher: voucher.toJSON()
+            });
+        }
+        
+        if (voucher.isCoffeeValidated) {
+            return res.status(400).json({ 
+                error: 'El café ya ha sido validado',
+                status: 'coffee_already_validated',
+                voucher: voucher.toJSON()
+            });
+        }
+        
+        // Validar el café
+        await voucher.validateCoffee(req.user.id);
+        
         res.json({
             success: true,
             message: 'Café validado exitosamente',
-            voucher: {
-                ...voucher,
-                status_info: voucher.getStatusInfo()
-            }
+            status: 'coffee_validated',
+            voucher: voucher.toJSON()
         });
-
-        console.log(`☕ Café validado - Vale: ${code}, Validador: ${req.user.full_name} - ${new Date().toISOString()}`);
-
+        
     } catch (error) {
         console.error('Error validando café:', error);
-        
-        let statusCode = 400;
-        if (error.message.includes('no encontrado')) {
-            statusCode = 404;
-        } else if (error.message.includes('expirado')) {
-            statusCode = 410; // Gone
-        } else if (error.message.includes('no incluye café')) {
-            statusCode = 422; // Unprocessable Entity
-        }
-
-        res.status(statusCode).json({
-            success: false,
-            message: error.message
+        res.status(500).json({ 
+            error: error.message || 'Error interno del servidor',
+            status: 'error'
         });
     }
 });
 
-// Validación automática según el tipo de validador
-router.post('/vouchers/:code/validate', async (req, res) => {
+// Consultar estado de voucher sin validar
+router.get('/check/:code', async (req, res) => {
     try {
-        const code = req.params.code.toUpperCase().trim();
-        const { validation_type } = req.body; // 'food' o 'coffee'
-        const validatorId = req.user.id;
-
-        if (!code) {
-            return res.status(400).json({
-                success: false,
-                message: 'Código de vale requerido'
+        const { code } = req.params;
+        
+        const voucher = await Voucher.findByCode(code.toUpperCase());
+        
+        if (!voucher) {
+            return res.status(404).json({ 
+                error: 'Voucher no encontrado',
+                status: 'not_found'
             });
         }
-
-        if (!validation_type || !['food', 'coffee'].includes(validation_type)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Tipo de validación requerido: food o coffee'
-            });
-        }
-
-        let voucher;
-        let message;
-
-        if (validation_type === 'food') {
-            voucher = await Voucher.validateFood(code, validatorId);
-            message = 'Comida validada exitosamente';
-            console.log(`🍽️ Comida validada - Vale: ${code}, Validador: ${req.user.full_name}`);
-        } else if (validation_type === 'coffee') {
-            voucher = await Voucher.validateCoffee(code, validatorId);
-            message = 'Café validado exitosamente';
-            console.log(`☕ Café validado - Vale: ${code}, Validador: ${req.user.full_name}`);
-        }
-
+        
+        const status = voucher.getValidationStatus();
+        
         res.json({
             success: true,
-            message: message,
-            voucher: {
-                ...voucher,
-                status_info: voucher.getStatusInfo()
-            }
+            voucher: voucher.toJSON(),
+            status,
+            isExpired: voucher.isExpired(),
+            canValidate: !voucher.isValidated && !voucher.isExpired(),
+            canValidateCoffee: voucher.requiresCoffeeValidation && voucher.isValidated && !voucher.isCoffeeValidated && !voucher.isExpired()
         });
-
-    } catch (error) {
-        console.error('Error en validación:', error);
         
-        let statusCode = 400;
-        if (error.message.includes('no encontrado')) {
-            statusCode = 404;
-        } else if (error.message.includes('expirado')) {
-            statusCode = 410;
-        } else if (error.message.includes('no incluye café')) {
-            statusCode = 422;
-        }
-
-        res.status(statusCode).json({
-            success: false,
-            message: error.message
+    } catch (error) {
+        console.error('Error consultando voucher:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor' 
         });
     }
 });
 
-// CONSULTAS Y REPORTES PARA VALIDADORES
+// =============== CONSULTAS Y ESTADÍSTICAS ===============
 
-// Obtener vales pendientes de validación
-router.get('/vouchers/pending', async (req, res) => {
+// Obtener vouchers pendientes de validación
+router.get('/pending', async (req, res) => {
     try {
-        const { validation_type } = req.query; // 'food', 'coffee', o 'all'
+        const pendingVouchers = await Voucher.findPendingValidation();
         
-        let whereCondition = `v.status IN ('pending', 'validated') 
-                             AND datetime(v.expires_at) > datetime('now')`;
-
-        if (validation_type === 'food') {
-            whereCondition += ` AND v.status = 'pending'`;
-        } else if (validation_type === 'coffee') {
-            whereCondition += ` AND v.status = 'validated' AND v.has_coffee = 1`;
-        }
-
-        const vouchers = await getAll(`
-            SELECT v.*, s.total_amount as sale_total, u.full_name as cashier_name
-            FROM vouchers v 
-            LEFT JOIN sales s ON v.sale_id = s.id
-            LEFT JOIN users u ON s.cashier_id = u.id
-            WHERE ${whereCondition}
-            ORDER BY v.created_at ASC
-            LIMIT 100
-        `);
-
         res.json({
             success: true,
-            vouchers: vouchers.map(voucher => ({
-                ...voucher,
-                status_info: (new Voucher(voucher)).getStatusInfo()
-            }))
+            vouchers: pendingVouchers,
+            count: pendingVouchers.length
         });
     } catch (error) {
-        console.error('Error obteniendo vales pendientes:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
+        console.error('Error obteniendo vouchers pendientes:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Obtener vouchers pendientes de validación de café
+router.get('/pending-coffee', async (req, res) => {
+    try {
+        const pendingCoffeeVouchers = await Voucher.findPendingCoffeeValidation();
+        
+        res.json({
+            success: true,
+            vouchers: pendingCoffeeVouchers,
+            count: pendingCoffeeVouchers.length
         });
+    } catch (error) {
+        console.error('Error obteniendo vouchers pendientes de café:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
 // Obtener historial de validaciones del validador actual
-router.get('/validations/history', async (req, res) => {
+router.get('/history', async (req, res) => {
     try {
         const { limit = 50, offset = 0 } = req.query;
-        const validatorId = req.user.id;
-
-        // Obtener vales validados por este validador (tanto comida como café)
-        const validations = await getAll(`
-            SELECT DISTINCT v.*, s.total_amount as sale_total, u.full_name as cashier_name,
-                   CASE 
-                     WHEN v.food_validator_id = ? THEN 'food'
-                     WHEN v.coffee_validator_id = ? THEN 'coffee'
-                     ELSE 'unknown'
-                   END as validation_type,
-                   CASE 
-                     WHEN v.food_validator_id = ? THEN v.food_validated_at
-                     WHEN v.coffee_validator_id = ? THEN v.coffee_validated_at
-                     ELSE NULL
-                   END as validated_at
-            FROM vouchers v 
-            LEFT JOIN sales s ON v.sale_id = s.id
-            LEFT JOIN users u ON s.cashier_id = u.id
-            WHERE v.food_validator_id = ? OR v.coffee_validator_id = ?
-            ORDER BY 
-                CASE 
-                  WHEN v.food_validator_id = ? THEN v.food_validated_at
-                  WHEN v.coffee_validator_id = ? THEN v.coffee_validated_at
-                END DESC
-            LIMIT ? OFFSET ?
-        `, [
-            validatorId, validatorId, validatorId, validatorId, 
-            validatorId, validatorId, validatorId, validatorId,
-            parseInt(limit), parseInt(offset)
-        ]);
-
+        
+        const database = require('../config/database');
+        
+        // Obtener vouchers validados por el usuario actual
+        const vouchers = await database.all(
+            `SELECT v.*, s.sale_number 
+             FROM vouchers v 
+             JOIN sales s ON v.sale_id = s.id 
+             WHERE v.validated_by = ? OR v.coffee_validated_by = ?
+             ORDER BY v.validated_at DESC, v.coffee_validated_at DESC
+             LIMIT ? OFFSET ?`,
+            [req.user.id, req.user.id, parseInt(limit), parseInt(offset)]
+        );
+        
         res.json({
             success: true,
-            validations: validations,
-            pagination: {
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                count: validations.length
-            }
+            vouchers: vouchers.map(v => new Voucher(v).toJSON()),
+            count: vouchers.length
         });
     } catch (error) {
-        console.error('Error obteniendo historial de validaciones:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        console.error('Error obteniendo historial:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Dashboard del validador
-router.get('/dashboard', async (req, res) => {
+// Estadísticas del día para el validador
+router.get('/stats/today', async (req, res) => {
     try {
-        const validatorId = req.user.id;
         const today = new Date().toISOString().split('T')[0];
-
-        // Validaciones de hoy
-        const todayValidations = await getAll(`
-            SELECT v.*, 
-                   CASE 
-                     WHEN v.food_validator_id = ? AND DATE(v.food_validated_at) = ? THEN 'food'
-                     WHEN v.coffee_validator_id = ? AND DATE(v.coffee_validated_at) = ? THEN 'coffee'
-                     ELSE NULL
-                   END as validation_type
-            FROM vouchers v
-            WHERE (v.food_validator_id = ? AND DATE(v.food_validated_at) = ?)
-               OR (v.coffee_validator_id = ? AND DATE(v.coffee_validated_at) = ?)
-        `, [validatorId, today, validatorId, today, validatorId, today, validatorId, today]);
-
-        // Contar tipos de validaciones
-        const foodValidations = todayValidations.filter(v => v.validation_type === 'food').length;
-        const coffeeValidations = todayValidations.filter(v => v.validation_type === 'coffee').length;
-
-        // Vales pendientes que este validador puede procesar
-        const pendingFood = await getAll(`
-            SELECT COUNT(*) as count FROM vouchers 
-            WHERE status = 'pending' 
-            AND datetime(expires_at) > datetime('now')
-        `);
-
-        const pendingCoffee = await getAll(`
-            SELECT COUNT(*) as count FROM vouchers 
-            WHERE status = 'validated' 
-            AND has_coffee = 1 
-            AND datetime(expires_at) > datetime('now')
-        `);
-
-        // Estadísticas de la semana
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        const weekAgoStr = weekAgo.toISOString().split('T')[0];
-
-        const weekStats = await getOne(`
-            SELECT 
-                COUNT(CASE WHEN v.food_validator_id = ? AND DATE(v.food_validated_at) >= ? THEN 1 END) as week_food_validations,
-                COUNT(CASE WHEN v.coffee_validator_id = ? AND DATE(v.coffee_validated_at) >= ? THEN 1 END) as week_coffee_validations
-            FROM vouchers v
-            WHERE (v.food_validator_id = ? AND DATE(v.food_validated_at) >= ?)
-               OR (v.coffee_validator_id = ? AND DATE(v.coffee_validated_at) >= ?)
-        `, [validatorId, weekAgoStr, validatorId, weekAgoStr, validatorId, weekAgoStr, validatorId, weekAgoStr]);
-
+        const database = require('../config/database');
+        
+        // Estadísticas de validaciones del usuario actual
+        const stats = await database.get(
+            `SELECT 
+             COUNT(CASE WHEN DATE(validated_at) = ? AND validated_by = ? THEN 1 END) as validated_today,
+             COUNT(CASE WHEN DATE(coffee_validated_at) = ? AND coffee_validated_by = ? THEN 1 END) as coffee_validated_today,
+             COUNT(CASE WHEN validated_by = ? THEN 1 END) as total_validated,
+             COUNT(CASE WHEN coffee_validated_by = ? THEN 1 END) as total_coffee_validated
+             FROM vouchers`,
+            [today, req.user.id, today, req.user.id, req.user.id, req.user.id]
+        );
+        
+        // Vouchers pendientes
+        const pendingGeneral = await Voucher.findPendingValidation();
+        const pendingCoffee = await Voucher.findPendingCoffeeValidation();
+        
         res.json({
             success: true,
-            dashboard: {
+            stats: {
                 today: {
-                    total_validations: todayValidations.length,
-                    food_validations: foodValidations,
-                    coffee_validations: coffeeValidations
+                    validated: parseInt(stats.validated_today) || 0,
+                    coffeeValidated: parseInt(stats.coffee_validated_today) || 0
+                },
+                total: {
+                    validated: parseInt(stats.total_validated) || 0,
+                    coffeeValidated: parseInt(stats.total_coffee_validated) || 0
                 },
                 pending: {
-                    food_vouchers: pendingFood[0]?.count || 0,
-                    coffee_vouchers: pendingCoffee[0]?.count || 0
-                },
-                week: {
-                    food_validations: weekStats?.week_food_validations || 0,
-                    coffee_validations: weekStats?.week_coffee_validations || 0,
-                    total_validations: (weekStats?.week_food_validations || 0) + (weekStats?.week_coffee_validations || 0)
-                },
-                recent_validations: todayValidations.slice(0, 10)
+                    general: pendingGeneral.length,
+                    coffee: pendingCoffee.length
+                }
             }
         });
     } catch (error) {
-        console.error('Error obteniendo dashboard del validador:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        console.error('Error obteniendo estadísticas:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Buscar vales por diferentes criterios
-router.get('/vouchers/search', async (req, res) => {
+// Buscar vouchers por número de venta
+router.get('/search/sale/:saleNumber', async (req, res) => {
     try {
-        const { query, type = 'code' } = req.query;
+        const { saleNumber } = req.params;
         
-        if (!query || query.trim().length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Parámetro de búsqueda requerido'
+        const database = require('../config/database');
+        
+        const sale = await database.get(
+            'SELECT * FROM sales WHERE sale_number = ?',
+            [saleNumber]
+        );
+        
+        if (!sale) {
+            return res.status(404).json({ 
+                error: 'Venta no encontrada' 
             });
         }
-
-        const searchTerm = query.trim();
-        let vouchers = [];
-
-        switch (type) {
-            case 'code':
-                // Buscar por código exacto o parcial
-                vouchers = await getAll(`
-                    SELECT v.*, s.total_amount as sale_total, u.full_name as cashier_name
-                    FROM vouchers v 
-                    LEFT JOIN sales s ON v.sale_id = s.id
-                    LEFT JOIN users u ON s.cashier_id = u.id
-                    WHERE v.code LIKE ?
-                    ORDER BY v.created_at DESC
-                    LIMIT 20
-                `, [`%${searchTerm}%`]);
-                break;
-
-            case 'sale_id':
-                // Buscar por ID de venta
-                const saleId = parseInt(searchTerm);
-                if (isNaN(saleId)) {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'ID de venta debe ser un número'
-                    });
-                }
-                
-                vouchers = await getAll(`
-                    SELECT v.*, s.total_amount as sale_total, u.full_name as cashier_name
-                    FROM vouchers v 
-                    LEFT JOIN sales s ON v.sale_id = s.id
-                    LEFT JOIN users u ON s.cashier_id = u.id
-                    WHERE v.sale_id = ?
-                `, [saleId]);
-                break;
-
-            default:
-                return res.status(400).json({
-                    success: false,
-                    message: 'Tipo de búsqueda no válido. Use: code o sale_id'
-                });
-        }
-
+        
+        const vouchers = await Voucher.findBySaleId(sale.id);
+        
         res.json({
             success: true,
-            vouchers: vouchers.map(voucher => ({
-                ...voucher,
-                status_info: (new Voucher(voucher)).getStatusInfo()
-            })),
-            search: {
-                query: searchTerm,
-                type: type,
-                results_count: vouchers.length
-            }
+            sale,
+            vouchers
         });
     } catch (error) {
-        console.error('Error buscando vales:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        console.error('Error buscando por venta:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Obtener configuración básica para el validador
-router.get('/config', async (req, res) => {
+// Obtener detalles completos de un voucher
+router.get('/details/:code', async (req, res) => {
     try {
-        const config = await getOne(`
-            SELECT restaurant_name, logo_path 
-            FROM restaurant_config 
-            ORDER BY id DESC LIMIT 1
-        `);
-
+        const { code } = req.params;
+        
+        const voucher = await Voucher.findByCode(code.toUpperCase());
+        
+        if (!voucher) {
+            return res.status(404).json({ 
+                error: 'Voucher no encontrado' 
+            });
+        }
+        
+        // Obtener información de la venta asociada
+        const sale = await Sale.findById(voucher.saleId);
+        
         res.json({
             success: true,
-            config: config || {
-                restaurant_name: 'Mi Restaurante',
-                logo_path: null
-            }
+            voucher: voucher.toJSON(),
+            sale: sale ? sale.toJSON() : null,
+            validationStatus: voucher.getValidationStatus()
         });
     } catch (error) {
-        console.error('Error obteniendo configuración:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        console.error('Error obteniendo detalles del voucher:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
